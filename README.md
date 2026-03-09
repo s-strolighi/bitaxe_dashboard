@@ -27,14 +27,18 @@ Se Firebase non e configurato, la dashboard usa dati mock per test UI.
 ## Schema atteso dati Firebase
 Collezione: `telemetry` (configurabile con `VITE_FIREBASE_COLLECTION`)
 
-Ogni documento dovrebbe avere:
-- `timestamp` (epoch in millisecondi)
-- `hashrateGh` (numero)
-- `temperatureC` (numero)
-- `powerW` (numero)
-- `fanPercent` (numero, opzionale)
-- `acceptedShares` (numero, opzionale)
-- `rejectedShares` (numero, opzionale)
+Ogni documento dovrebbe avere (anche con alias):
+- `timestamp` (alias: `ts`, `uploadedAt`, anche Firestore Timestamp)
+- `hashrateGh` (alias: `hashrate`, `hashRate`, `ghs`, `ghs5s`, `payload.decision.hashrate`, `payload.miner.hashRate`)
+- `tempChipC` (alias: `tempChip`, `chipTemp`, `temp_chip`, `temp`, `payload.decision.chip`, `payload.miner.temp`)
+- `tempVrC` (alias: `tempVr`, `vrTemp`, `temp_vr`, `payload.decision.vr`, `payload.miner.vrTemp`) opzionale
+- `powerW` (alias: `power`, `watts`, `consumptionW`, `payload.decision.power`, `payload.miner.power`)
+- `efficiencyWTh` (alias: `payload.decision.eff_w_per_gh` convertito automaticamente in W/TH) opzionale
+- `fanPercent` (alias: `fan`, `fan_pct`, `payload.miner.fanspeed`) opzionale
+- `acceptedShares` (alias: `sharesAccepted`, `shares`, `payload.miner.sharesAccepted`) opzionale
+- `rejectedShares` (alias: `sharesRejected`, `payload.miner.sharesRejected`) opzionale
+
+Se i dati sono annidati (es. `data.*` o `telemetry.*`) vengono comunque letti.
 
 ## Deploy su GitHub Pages
 Il workflow e in `.github/workflows/deploy.yml` e fa deploy su ogni push su `main`.

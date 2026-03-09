@@ -29,18 +29,24 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
       totalSamples: 0,
       bestHashrate: 0,
       avgHashrate: 0,
-      minTemp: 0,
-      maxTemp: 0,
-      avgTemp: 0,
+      minTempChip: 0,
+      maxTempChip: 0,
+      avgTempChip: 0,
+      minTempVr: 0,
+      maxTempVr: 0,
+      avgTempVr: 0,
       avgPower: 0,
       estimatedEfficiency: 0,
-      rejectionRatePct: 0
+      rejectionRatePct: 0,
+      totalShares: 0
     };
   }
 
   const hashrates = telemetry.map((point) => point.hashrateGh);
-  const temps = telemetry.map((point) => point.temperatureC);
+  const chipTemps = telemetry.map((point) => point.tempChipC);
+  const vrTemps = telemetry.map((point) => point.tempVrC);
   const powers = telemetry.map((point) => point.powerW);
+  const efficiencies = telemetry.map((point) => point.efficiencyWTh);
   const totalAccepted = telemetry.reduce(
     (acc, point) => acc + point.acceptedShares,
     0
@@ -58,12 +64,16 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
     totalSamples: telemetry.length,
     bestHashrate: Math.max(...hashrates),
     avgHashrate,
-    minTemp: Math.min(...temps),
-    maxTemp: Math.max(...temps),
-    avgTemp: safeAverage(temps),
+    minTempChip: Math.min(...chipTemps),
+    maxTempChip: Math.max(...chipTemps),
+    avgTempChip: safeAverage(chipTemps),
+    minTempVr: Math.min(...vrTemps),
+    maxTempVr: Math.max(...vrTemps),
+    avgTempVr: safeAverage(vrTemps),
     avgPower,
-    estimatedEfficiency: avgPower > 0 ? avgHashrate / avgPower : 0,
-    rejectionRatePct: totalShares > 0 ? (totalRejected / totalShares) * 100 : 0
+    estimatedEfficiency: safeAverage(efficiencies),
+    rejectionRatePct: totalShares > 0 ? (totalRejected / totalShares) * 100 : 0,
+    totalShares
   };
 }
 

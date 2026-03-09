@@ -10,8 +10,10 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
     const timestamp = now - (points - index) * stepMs;
     const wave = Math.sin(index / 12);
     const hashrateGh = Number((490 + wave * 45 + Math.random() * 18).toFixed(2));
-    const temperatureC = Number((58 + wave * 6 + Math.random() * 4).toFixed(2));
-    const powerW = Number((13 + wave * 1.2 + Math.random() * 0.8).toFixed(2));
+    const tempChipC = Number((58 + wave * 6 + Math.random() * 4).toFixed(1));
+    const tempVrC = Number((52 + wave * 5 + Math.random() * 3).toFixed(1));
+    const powerW = Number((13 + wave * 1.2 + Math.random() * 0.8).toFixed(1));
+    const efficiencyWTh = Number(((powerW * 1000) / hashrateGh).toFixed(1));
     const fanPercent = Math.max(
       25,
       Math.min(100, Math.round(48 + wave * 18 + Math.random() * 10))
@@ -22,8 +24,10 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
     return {
       timestamp,
       hashrateGh,
-      temperatureC,
+      tempChipC,
+      tempVrC,
       powerW,
+      efficiencyWTh,
       fanPercent,
       acceptedShares,
       rejectedShares

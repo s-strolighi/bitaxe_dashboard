@@ -25,11 +25,13 @@ function App() {
   const [rawTelemetry, setRawTelemetry] = useState<TelemetryPoint[]>([]);
   const [range, setRange] = useState<TimeRange>("24h");
   const [loading, setLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<"firebase" | "mock">("mock");
 
   useEffect(() => {
     async function run() {
-      const telemetry = await loadTelemetry();
-      setRawTelemetry(telemetry);
+      const { points, source } = await loadTelemetry();
+      setRawTelemetry(points);
+      setDataSource(source);
       setLoading(false);
     }
 
@@ -56,6 +58,9 @@ function App() {
         <div>
           <h1>Bitaxe Analytics Dashboard</h1>
           <p>Monitoraggio operativo con metriche live e storiche</p>
+          <p>
+            Fonte dati: <strong>{dataSource === "firebase" ? "Firebase" : "Mock"}</strong>
+          </p>
         </div>
         <RangeSelector value={range} onChange={setRange} />
       </header>
@@ -63,38 +68,41 @@ function App() {
       <section className="kpi-grid">
         <KpiCard
           label="Best hashrate"
-          value={`${formatNumber(stats.bestHashrate)} GH/s`}
+          value={`${formatNumber(stats.bestHashrate, 2)} GH/s`}
           tone="good"
         />
         <KpiCard
           label="Hashrate medio"
-          value={`${formatNumber(stats.avgHashrate)} GH/s`}
+          value={`${formatNumber(stats.avgHashrate, 2)} GH/s`}
         />
         <KpiCard
-          label="Temperatura min/max"
-          value={`${formatNumber(stats.minTemp)} / ${formatNumber(stats.maxTemp)} °C`}
-          tone={stats.maxTemp >= 75 ? "warn" : "default"}
+          label="Temp chip min/max"
+          value={`${formatNumber(stats.minTempChip, 1)} / ${formatNumber(stats.maxTempChip, 1)} degC`}
+          tone={stats.maxTempChip >= 75 ? "warn" : "default"}
+        />
+        <KpiCard
+          label="Temp VR min/max"
+          value={`${formatNumber(stats.minTempVr, 1)} / ${formatNumber(stats.maxTempVr, 1)} degC`}
+          tone={stats.maxTempVr >= 85 ? "warn" : "default"}
         />
         <KpiCard
           label="Potenza media"
-          value={`${formatNumber(stats.avgPower)} W`}
+          value={`${formatNumber(stats.avgPower, 1)} W`}
         />
         <KpiCard
           label="Efficienza media"
-          value={`${formatNumber(stats.estimatedEfficiency, 3)} GH/W`}
+          value={`${formatNumber(stats.estimatedEfficiency, 1)} W/TH`}
         />
         <KpiCard
           label="Share reject rate"
           value={`${formatNumber(stats.rejectionRatePct)} %`}
           tone={stats.rejectionRatePct > 2 ? "warn" : "default"}
         />
+        <KpiCard label="Shares totali" value={`${stats.totalShares}`} />
       </section>
 
       <section className="charts-grid">
-        <ChartCard
-          title="Trend Hashrate vs Temperatura"
-          subtitle="Confronto andamento nelle ultime rilevazioni"
-        >
+        <ChartCard title="Hashrate vs Temperature" subtitle="Chip e VR confrontate nel tempo">
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={telemetry}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
@@ -127,9 +135,18 @@ function App() {
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="temperatureC"
-                name="Temperatura °C"
+                dataKey="tempChipC"
+                name="Temp chip degC"
                 stroke="#ff8a48"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="tempVrC"
+                name="Temp VR degC"
+                stroke="#ffcc66"
                 strokeWidth={2}
                 dot={false}
               />
@@ -138,8 +155,8 @@ function App() {
         </ChartCard>
 
         <ChartCard
-          title="Consumo e ventilazione"
-          subtitle="Potenza assorbita e intensita ventola"
+          title="Potenza e efficienza"
+          subtitle="Confronto diretto tra consumo e resa"
         >
           <ResponsiveContainer width="100%" height={320}>
             <AreaChart data={telemetry}>
@@ -159,7 +176,8 @@ function App() {
                   })
                 }
               />
-              <YAxis />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
               <Tooltip
                 labelFormatter={(value: number) =>
                   new Date(value).toLocaleString("it-IT")
@@ -167,6 +185,7 @@ function App() {
               />
               <Legend />
               <Area
+                yAxisId="left"
                 type="monotone"
                 dataKey="powerW"
                 name="Potenza W"
@@ -174,9 +193,10 @@ function App() {
                 fill="url(#colorPower)"
               />
               <Line
+                yAxisId="right"
                 type="monotone"
-                dataKey="fanPercent"
-                name="Ventola %"
+                dataKey="efficiencyWTh"
+                name="Efficienza W/TH"
                 stroke="#ffd166"
                 dot={false}
               />

@@ -21,8 +21,10 @@ export function TelemetryTable({ telemetry }: TelemetryTableProps) {
             <tr>
               <th>Ora</th>
               <th>Hashrate (GH/s)</th>
-              <th>Temperatura (°C)</th>
+              <th>Temp Chip (degC)</th>
+              <th>Temp VR (degC)</th>
               <th>Potenza (W)</th>
+              <th>Efficienza (W/TH)</th>
               <th>Ventola (%)</th>
             </tr>
           </thead>
@@ -30,9 +32,11 @@ export function TelemetryTable({ telemetry }: TelemetryTableProps) {
             {rows.map((point) => (
               <tr key={point.timestamp}>
                 <td>{formatTimestamp(point.timestamp)}</td>
-                <td>{formatNumber(point.hashrateGh)}</td>
-                <td>{formatNumber(point.temperatureC)}</td>
-                <td>{formatNumber(point.powerW)}</td>
+                <td>{formatNumber(point.hashrateGh, 2)}</td>
+                <td>{formatNumber(point.tempChipC, 1)}</td>
+                <td>{formatNumber(point.tempVrC, 1)}</td>
+                <td>{formatNumber(point.powerW, 1)}</td>
+                <td>{formatNumber(point.efficiencyWTh, 1)}</td>
                 <td>{point.fanPercent}</td>
               </tr>
             ))}
