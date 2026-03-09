@@ -167,6 +167,11 @@ function normalizePoint(raw: Record<string, unknown>): {
     ["fanPercent", "fan", "fan_pct", "miner.fanspeed", "payload.miner.fanspeed"],
     0
   );
+  const blockFound = pickNumber(
+    merged,
+    ["blockFound", "blocksFound", "miner.blockFound", "payload.miner.blockFound"],
+    0
+  );
   const acceptedShares = pickNumber(
     merged,
     [
@@ -223,6 +228,7 @@ function normalizePoint(raw: Record<string, unknown>): {
       tempVrC: tempVrC ?? safeTempChipC,
       powerW: safePowerW,
       efficiencyWTh: normalizedEfficiencyWTh,
+      blockFound: blockFound ?? 0,
       fanPercent: fanPercent ?? 0,
       acceptedShares: acceptedShares ?? 0,
       rejectedShares: rejectedShares ?? 0

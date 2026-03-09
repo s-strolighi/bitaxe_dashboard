@@ -38,7 +38,8 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
       avgPower: 0,
       estimatedEfficiency: 0,
       rejectionRatePct: 0,
-      totalShares: 0
+      totalShares: 0,
+      blocksFound: 0
     };
   }
 
@@ -56,6 +57,7 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
     0
   );
   const totalShares = totalAccepted + totalRejected;
+  const blocksFound = Math.max(...telemetry.map((point) => point.blockFound));
 
   const avgHashrate = safeAverage(hashrates);
   const avgPower = safeAverage(powers);
@@ -73,7 +75,8 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
     avgPower,
     estimatedEfficiency: safeAverage(efficiencies),
     rejectionRatePct: totalShares > 0 ? (totalRejected / totalShares) * 100 : 0,
-    totalShares
+    totalShares,
+    blocksFound
   };
 }
 
@@ -81,11 +84,82 @@ export function formatNumber(value: number, digits = 2): string {
   return value.toFixed(digits);
 }
 
+export function formatCompactNumber(value: number): string {
+  return new Intl.NumberFormat("it-IT", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(value);
+}
+
 export function formatTimestamp(timestamp: number): string {
   return new Intl.DateTimeFormat("it-IT", {
+    weekday: "short",
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit"
   }).format(new Date(timestamp));
+}
+
+export type AggregatedChartPoint = TelemetryPoint & {
+  hashrateTh: number;
+  acceptedSharesDelta: number;
+  rejectedSharesDelta: number;
+};
+
+export function buildChartPoints(
+  telemetry: TelemetryPoint[],
+  maxPoints = 84
+): AggregatedChartPoint[] {
+  if (telemetry.length <= maxPoints) {
+    return telemetry.map((point, index, list) => {
+      const prev = list[index - 1];
+      return {
+        ...point,
+        hashrateTh: point.hashrateGh / 1000,
+        acceptedSharesDelta: prev
+          ? Math.max(0, point.acceptedShares - prev.acceptedShares)
+          : 0,
+        rejectedSharesDelta: prev
+          ? Math.max(0, point.rejectedShares - prev.rejectedShares)
+          : 0
+      };
+    });
+  }
+
+  const bucketSize = Math.ceil(telemetry.length / maxPoints);
+  const output: AggregatedChartPoint[] = [];
+
+  for (let i = 0; i < telemetry.length; i += bucketSize) {
+    const bucket = telemetry.slice(i, i + bucketSize);
+    const first = bucket[0];
+    const last = bucket[bucket.length - 1];
+    const hashrateGh = safeAverage(bucket.map((point) => point.hashrateGh));
+    const tempChipC = safeAverage(bucket.map((point) => point.tempChipC));
+    const tempVrC = safeAverage(bucket.map((point) => point.tempVrC));
+    const powerW = safeAverage(bucket.map((point) => point.powerW));
+    const efficiencyWTh =
+      safeAverage(bucket.map((point) => point.efficiencyWTh)) ||
+      (hashrateGh > 0 ? (powerW * 1000) / hashrateGh : 0);
+    const fanPercent = Math.round(safeAverage(bucket.map((point) => point.fanPercent)));
+    const blockFound = Math.max(...bucket.map((point) => point.blockFound));
+
+    output.push({
+      timestamp: last.timestamp,
+      hashrateGh,
+      hashrateTh: hashrateGh / 1000,
+      tempChipC,
+      tempVrC,
+      powerW,
+      efficiencyWTh,
+      fanPercent,
+      blockFound,
+      acceptedShares: last.acceptedShares,
+      rejectedShares: last.rejectedShares,
+      acceptedSharesDelta: Math.max(0, last.acceptedShares - first.acceptedShares),
+      rejectedSharesDelta: Math.max(0, last.rejectedShares - first.rejectedShares)
+    });
+  }
+
+  return output;
 }

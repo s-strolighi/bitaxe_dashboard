@@ -3,12 +3,18 @@ import type { ReactNode } from "react";
 type ChartCardProps = {
   title: string;
   subtitle?: string;
+  className?: string;
   children: ReactNode;
 };
 
-export function ChartCard({ title, subtitle, children }: ChartCardProps) {
+export function ChartCard({
+  title,
+  subtitle,
+  className,
+  children
+}: ChartCardProps) {
   return (
-    <section className="chart-card">
+    <section className={`chart-card ${className ?? ""}`.trim()}>
       <header>
         <h3>{title}</h3>
         {subtitle ? <p>{subtitle}</p> : null}

@@ -5,6 +5,7 @@ export type TelemetryPoint = {
   tempVrC: number;
   powerW: number;
   efficiencyWTh: number;
+  blockFound: number;
   fanPercent: number;
   acceptedShares: number;
   rejectedShares: number;
@@ -24,6 +25,7 @@ export type DashboardStats = {
   estimatedEfficiency: number;
   rejectionRatePct: number;
   totalShares: number;
+  blocksFound: number;
 };
 
 export type TimeRange = "6h" | "24h" | "7d" | "30d" | "all";

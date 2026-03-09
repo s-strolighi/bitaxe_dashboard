@@ -14,6 +14,7 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
     const tempVrC = Number((52 + wave * 5 + Math.random() * 3).toFixed(1));
     const powerW = Number((13 + wave * 1.2 + Math.random() * 0.8).toFixed(1));
     const efficiencyWTh = Number(((powerW * 1000) / hashrateGh).toFixed(1));
+    const blockFound = 0;
     const fanPercent = Math.max(
       25,
       Math.min(100, Math.round(48 + wave * 18 + Math.random() * 10))
@@ -28,6 +29,7 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
       tempVrC,
       powerW,
       efficiencyWTh,
+      blockFound,
       fanPercent,
       acceptedShares,
       rejectedShares

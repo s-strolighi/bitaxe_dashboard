@@ -17,7 +17,14 @@ import { ChartCard } from "./components/ChartCard";
 import { KpiCard } from "./components/KpiCard";
 import { RangeSelector } from "./components/RangeSelector";
 import { TelemetryTable } from "./components/TelemetryTable";
-import { calculateStats, filterByRange, formatNumber } from "./lib/metrics";
+import {
+  buildChartPoints,
+  calculateStats,
+  filterByRange,
+  formatCompactNumber,
+  formatNumber,
+  formatTimestamp
+} from "./lib/metrics";
 import { loadTelemetry } from "./services/telemetryRepository";
 import type { TelemetryPoint, TimeRange } from "./types";
 
@@ -44,14 +51,7 @@ function App() {
     () => filterByRange(rawTelemetry, range),
     [rawTelemetry, range]
   );
-  const telemetryForCharts = useMemo(
-    () =>
-      telemetry.map((point) => ({
-        ...point,
-        hashrateTh: point.hashrateGh / 1000
-      })),
-    [telemetry]
-  );
+  const telemetryForCharts = useMemo(() => buildChartPoints(telemetry, 96), [telemetry]);
   const stats = useMemo(() => calculateStats(telemetry), [telemetry]);
 
   if (loading) {
@@ -76,24 +76,31 @@ function App() {
         <RangeSelector value={range} onChange={setRange} />
       </header>
 
+      <section className="hero-grid">
+        <article className={`hero-kpi ${stats.blocksFound > 0 ? "hero-hit" : ""}`}>
+          <p>Blocchi minati</p>
+          <h2>{stats.blocksFound}</h2>
+        </article>
+      </section>
+
       <section className="kpi-grid">
         <KpiCard
           label="Best hashrate"
-          value={`${formatNumber(stats.bestHashrate / 1000, 3)} TH/s`}
+          value={`${formatNumber(stats.bestHashrate / 1000, 2)} TH/s`}
           tone="good"
         />
         <KpiCard
           label="Hashrate medio"
-          value={`${formatNumber(stats.avgHashrate / 1000, 3)} TH/s`}
+          value={`${formatNumber(stats.avgHashrate / 1000, 2)} TH/s`}
         />
         <KpiCard
           label="Temp chip min/max"
-          value={`${formatNumber(stats.minTempChip, 1)} / ${formatNumber(stats.maxTempChip, 1)} degC`}
+          value={`${formatNumber(stats.minTempChip, 1)} / ${formatNumber(stats.maxTempChip, 1)} °C`}
           tone={stats.maxTempChip >= 75 ? "warn" : "default"}
         />
         <KpiCard
           label="Temp VR min/max"
-          value={`${formatNumber(stats.minTempVr, 1)} / ${formatNumber(stats.maxTempVr, 1)} degC`}
+          value={`${formatNumber(stats.minTempVr, 1)} / ${formatNumber(stats.maxTempVr, 1)} °C`}
           tone={stats.maxTempVr >= 85 ? "warn" : "default"}
         />
         <KpiCard
@@ -109,11 +116,15 @@ function App() {
           value={`${formatNumber(stats.rejectionRatePct)} %`}
           tone={stats.rejectionRatePct > 2 ? "warn" : "default"}
         />
-        <KpiCard label="Shares totali" value={`${stats.totalShares}`} />
+        <KpiCard label="Shares totali" value={formatCompactNumber(stats.totalShares)} />
       </section>
 
       <section className="charts-grid">
-        <ChartCard title="Hashrate vs Temperature" subtitle="Chip e VR confrontate nel tempo">
+        <ChartCard
+          className="chart-card-wide"
+          title="Hashrate vs Temperature"
+          subtitle="Serie aggregate per migliore leggibilita"
+        >
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
@@ -126,12 +137,26 @@ function App() {
                   })
                 }
               />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
+              <YAxis
+                yAxisId="left"
+                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
+                tickFormatter={(value: number) => formatNumber(value, 2)}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                domain={[(value: number) => value - 1.5, (value: number) => value + 1.5]}
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+              />
               <Tooltip
-                labelFormatter={(value: number) =>
-                  new Date(value).toLocaleString("it-IT")
-                }
+                contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
+                labelStyle={{ color: "#d4def5" }}
+                itemStyle={{ color: "#eaf0ff" }}
+                labelFormatter={(value: number) => formatTimestamp(value)}
+                formatter={(value: number, name: string) => {
+                  if (name.includes("Hashrate")) return [formatNumber(value, 2), name];
+                  return [formatNumber(value, 1), name];
+                }}
               />
               <Legend />
               <Line
@@ -147,7 +172,7 @@ function App() {
                 yAxisId="right"
                 type="monotone"
                 dataKey="tempChipC"
-                name="Temp chip degC"
+                name="Temp chip °C"
                 stroke="#ff8a48"
                 strokeWidth={2}
                 dot={false}
@@ -156,7 +181,7 @@ function App() {
                 yAxisId="right"
                 type="monotone"
                 dataKey="tempVrC"
-                name="Temp VR degC"
+                name="Temp VR °C"
                 stroke="#ffcc66"
                 strokeWidth={2}
                 dot={false}
@@ -170,7 +195,7 @@ function App() {
           subtitle="Confronto diretto tra consumo e resa"
         >
           <ResponsiveContainer width="100%" height={320}>
-            <AreaChart data={telemetry}>
+            <AreaChart data={telemetryForCharts}>
               <defs>
                 <linearGradient id="colorPower" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#5cc8ff" stopOpacity={0.8} />
@@ -187,12 +212,14 @@ function App() {
                   })
                 }
               />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
+              <YAxis yAxisId="left" tickFormatter={(value: number) => formatNumber(value, 1)} />
+              <YAxis yAxisId="right" orientation="right" tickFormatter={(value: number) => formatNumber(value, 1)} />
               <Tooltip
-                labelFormatter={(value: number) =>
-                  new Date(value).toLocaleString("it-IT")
-                }
+                contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
+                labelStyle={{ color: "#d4def5" }}
+                itemStyle={{ color: "#eaf0ff" }}
+                labelFormatter={(value: number) => formatTimestamp(value)}
+                formatter={(value: number, name: string) => [formatNumber(value, 1), name]}
               />
               <Legend />
               <Area
@@ -217,7 +244,7 @@ function App() {
 
         <ChartCard title="Shares accettate/rifiutate" subtitle="Per campione">
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={telemetry.slice(-40)}>
+            <BarChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
               <XAxis
                 dataKey="timestamp"
@@ -228,15 +255,17 @@ function App() {
                   })
                 }
               />
-              <YAxis />
+              <YAxis tickFormatter={(value: number) => formatCompactNumber(value)} />
               <Tooltip
-                labelFormatter={(value: number) =>
-                  new Date(value).toLocaleString("it-IT")
-                }
+                contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
+                labelStyle={{ color: "#d4def5" }}
+                itemStyle={{ color: "#eaf0ff" }}
+                labelFormatter={(value: number) => formatTimestamp(value)}
+                formatter={(value: number, name: string) => [formatCompactNumber(value), name]}
               />
               <Legend />
-              <Bar dataKey="acceptedShares" name="Accettate" fill="#25c2a0" />
-              <Bar dataKey="rejectedShares" name="Rifiutate" fill="#ff5f5f" />
+              <Bar dataKey="acceptedSharesDelta" name="Accettate (delta)" fill="#25c2a0" />
+              <Bar dataKey="rejectedSharesDelta" name="Rifiutate (delta)" fill="#ff5f5f" />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>

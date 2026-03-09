@@ -75,6 +75,34 @@ body {
   margin-top: 1rem;
 }
 
+.hero-grid {
+  margin-top: 0.4rem;
+}
+
+.hero-kpi {
+  background: linear-gradient(135deg, rgba(14, 93, 122, 0.45), rgba(17, 24, 39, 0.9));
+  border: 1px solid rgba(95, 212, 255, 0.3);
+  border-radius: 16px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.hero-kpi p {
+  margin: 0;
+  color: #b5d9ff;
+  font-size: 0.95rem;
+}
+
+.hero-kpi h2 {
+  margin: 0.2rem 0 0;
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  line-height: 1;
+}
+
+.hero-kpi.hero-hit h2 {
+  color: #7ef7ac;
+}
+
 .kpi-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
@@ -116,6 +144,10 @@ body {
   border-radius: 14px;
   padding: 0.95rem;
   box-shadow: var(--shadow);
+}
+
+.chart-card-wide {
+  grid-column: 1 / -1;
 }
 
 .chart-card header h3,
@@ -169,5 +201,9 @@ th {
 @media (max-width: 768px) {
   .app-shell {
     padding: 1rem;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
   }
 }
