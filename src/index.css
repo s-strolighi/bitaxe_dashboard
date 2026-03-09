@@ -48,6 +48,24 @@ body {
   color: var(--text-muted);
 }
 
+.brand-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.brand-square {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+.brand-round {
+  display: none;
+  height: 34px;
+  width: 34px;
+}
+
 .range-selector {
   display: flex;
   gap: 0.45rem;
@@ -76,6 +94,8 @@ body {
 }
 
 .hero-grid {
+  display: flex;
+  justify-content: center;
   margin-top: 0.4rem;
 }
 
@@ -85,6 +105,8 @@ body {
   border-radius: 16px;
   padding: 1.1rem 1.2rem;
   box-shadow: var(--shadow);
+  width: min(100%, 420px);
+  text-align: center;
 }
 
 .hero-kpi p {
@@ -132,7 +154,7 @@ body {
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
   margin-top: 1rem;
 }
@@ -201,6 +223,14 @@ th {
 @media (max-width: 768px) {
   .app-shell {
     padding: 1rem;
+  }
+
+  .brand-square {
+    display: none;
+  }
+
+  .brand-round {
+    display: block;
   }
 
   .charts-grid {

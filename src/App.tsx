@@ -66,6 +66,10 @@ function App() {
     <main className="app-shell">
       <header className="topbar">
         <div>
+          <div className="brand-row">
+            <img src={`${import.meta.env.BASE_URL}branding/logo-square.png`} alt="Bitaxe logo" className="brand-square" />
+            <img src={`${import.meta.env.BASE_URL}branding/logo-round.png`} alt="Bitaxe logo" className="brand-round" />
+          </div>
           <h1>Bitaxe Analytics Dashboard</h1>
           <p>Monitoraggio operativo con metriche live e storiche</p>
           <p>
@@ -213,7 +217,11 @@ function App() {
                 }
               />
               <YAxis yAxisId="left" tickFormatter={(value: number) => formatNumber(value, 1)} />
-              <YAxis yAxisId="right" orientation="right" tickFormatter={(value: number) => formatNumber(value, 1)} />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+              />
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
                 labelStyle={{ color: "#d4def5" }}
