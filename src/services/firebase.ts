@@ -10,10 +10,18 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const isFirebaseConfigured = Object.values(firebaseConfig).every(Boolean);
+const requiredConfigKeys: Array<keyof typeof firebaseConfig> = [
+  "apiKey",
+  "projectId"
+];
+
+const missingFirebaseConfigKeys = requiredConfigKeys.filter(
+  (key) => !firebaseConfig[key]
+);
+const isFirebaseConfigured = missingFirebaseConfigKeys.length === 0;
 
 export const db = isFirebaseConfigured
   ? getFirestore(initializeApp(firebaseConfig))
   : null;
 
-export { isFirebaseConfigured };
+export { isFirebaseConfigured, missingFirebaseConfigKeys };

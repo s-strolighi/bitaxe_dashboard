@@ -1,7 +1,7 @@
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { mockTelemetry } from "../data/mockData";
 import type { TelemetryPoint } from "../types";
-import { db, isFirebaseConfigured } from "./firebase";
+import { db, isFirebaseConfigured, missingFirebaseConfigKeys } from "./firebase";
 
 const COLLECTION = import.meta.env.VITE_FIREBASE_COLLECTION || "telemetry";
 
@@ -185,7 +185,11 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
 
 export async function loadTelemetry(): Promise<TelemetryLoadResult> {
   if (!isFirebaseConfigured || !db) {
-    return { points: mockTelemetry, source: "mock", info: "firebase_not_configured" };
+    return {
+      points: mockTelemetry,
+      source: "mock",
+      info: `firebase_not_configured_missing_${missingFirebaseConfigKeys.join(",")}`
+    };
   }
 
   try {

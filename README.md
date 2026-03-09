@@ -17,6 +17,9 @@ Dashboard web moderna in stile BI per visualizzare telemetria Bitaxe da Firebase
 npm install
 ```
 2. Crea file `.env` copiando `.env.example` e imposta le variabili Firebase.
+   - In locale i campi minimi obbligatori sono:
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_PROJECT_ID`
 3. Avvia in locale:
 ```bash
 npm run dev
