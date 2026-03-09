@@ -11,6 +11,20 @@ export type TelemetryLoadResult = {
   info?: string;
 };
 
+function formatFirebaseError(error: unknown): string {
+  if (typeof error === "object" && error !== null) {
+    const maybeCode = (error as { code?: unknown }).code;
+    const maybeMessage = (error as { message?: unknown }).message;
+    const code = typeof maybeCode === "string" ? maybeCode : "unknown";
+    const message =
+      typeof maybeMessage === "string"
+        ? maybeMessage.replace(/\s+/g, " ").slice(0, 120)
+        : "no_message";
+    return `${code}:${message}`;
+  }
+  return "unknown:no_message";
+}
+
 function toFiniteNumber(value: unknown): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -211,7 +225,11 @@ export async function loadTelemetry(): Promise<TelemetryLoadResult> {
     return points.length > 0
       ? { points, source: "firebase" }
       : { points: [], source: "firebase", info: "firebase_documents_not_mapped" };
-  } catch {
-    return { points: [], source: "firebase", info: "firebase_read_error" };
+  } catch (error) {
+    return {
+      points: [],
+      source: "firebase",
+      info: `firebase_read_error_${formatFirebaseError(error)}`
+    };
   }
 }
