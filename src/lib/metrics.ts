@@ -103,6 +103,7 @@ export function formatTimestamp(timestamp: number): string {
 
 export type AggregatedChartPoint = TelemetryPoint & {
   hashrateTh: number;
+  efficiencyCalcWTh: number;
   acceptedSharesDelta: number;
   rejectedSharesDelta: number;
 };
@@ -117,6 +118,8 @@ export function buildChartPoints(
       return {
         ...point,
         hashrateTh: point.hashrateGh / 1000,
+        efficiencyCalcWTh:
+          point.hashrateGh > 0 ? (point.powerW * 1000) / point.hashrateGh : 0,
         acceptedSharesDelta: prev
           ? Math.max(0, point.acceptedShares - prev.acceptedShares)
           : 0,
@@ -148,6 +151,7 @@ export function buildChartPoints(
       timestamp: last.timestamp,
       hashrateGh,
       hashrateTh: hashrateGh / 1000,
+      efficiencyCalcWTh: hashrateGh > 0 ? (powerW * 1000) / hashrateGh : 0,
       tempChipC,
       tempVrC,
       powerW,

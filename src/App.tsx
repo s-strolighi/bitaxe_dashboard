@@ -155,7 +155,6 @@ function App() {
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
                 labelStyle={{ color: "#d4def5" }}
-                itemStyle={{ color: "#eaf0ff" }}
                 labelFormatter={(value: number) => formatTimestamp(value)}
                 formatter={(value: number, name: string) => {
                   if (name.includes("Hashrate")) return [formatNumber(value, 2), name];
@@ -225,7 +224,6 @@ function App() {
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
                 labelStyle={{ color: "#d4def5" }}
-                itemStyle={{ color: "#eaf0ff" }}
                 labelFormatter={(value: number) => formatTimestamp(value)}
                 formatter={(value: number, name: string) => [formatNumber(value, 1), name]}
               />
@@ -241,9 +239,10 @@ function App() {
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="efficiencyWTh"
+                dataKey="efficiencyCalcWTh"
                 name="Efficienza W/TH"
                 stroke="#ffd166"
+                strokeWidth={2}
                 dot={false}
               />
             </AreaChart>
@@ -267,7 +266,6 @@ function App() {
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
                 labelStyle={{ color: "#d4def5" }}
-                itemStyle={{ color: "#eaf0ff" }}
                 labelFormatter={(value: number) => formatTimestamp(value)}
                 formatter={(value: number, name: string) => [formatCompactNumber(value), name]}
               />
