@@ -9,6 +9,7 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
+const firebaseDatabaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID;
 
 const requiredConfigKeys: Array<keyof typeof firebaseConfig> = [
   "apiKey",
@@ -21,7 +22,7 @@ const missingFirebaseConfigKeys = requiredConfigKeys.filter(
 const isFirebaseConfigured = missingFirebaseConfigKeys.length === 0;
 
 export const db = isFirebaseConfigured
-  ? getFirestore(initializeApp(firebaseConfig))
+  ? getFirestore(initializeApp(firebaseConfig), firebaseDatabaseId || undefined)
   : null;
 
-export { isFirebaseConfigured, missingFirebaseConfigKeys };
+export { isFirebaseConfigured, missingFirebaseConfigKeys, firebaseDatabaseId };

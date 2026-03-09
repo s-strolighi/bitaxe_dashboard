@@ -1,7 +1,19 @@
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  collectionGroup,
+  getDocs,
+  limit,
+  orderBy,
+  query
+} from "firebase/firestore";
 import { mockTelemetry } from "../data/mockData";
 import type { TelemetryPoint } from "../types";
-import { db, isFirebaseConfigured, missingFirebaseConfigKeys } from "./firebase";
+import {
+  db,
+  firebaseDatabaseId,
+  isFirebaseConfigured,
+  missingFirebaseConfigKeys
+} from "./firebase";
 
 const COLLECTION = import.meta.env.VITE_FIREBASE_COLLECTION || "telemetry";
 
@@ -239,6 +251,13 @@ export async function loadTelemetry(): Promise<TelemetryLoadResult> {
     } catch {
       snapshot = await getDocs(collection(db, COLLECTION));
     }
+    if (snapshot.docs.length === 0) {
+      try {
+        snapshot = await getDocs(query(collectionGroup(db, "telemetry"), limit(500)));
+      } catch {
+        snapshot = await getDocs(query(collectionGroup(db, "current"), limit(500)));
+      }
+    }
     const mapped = snapshot.docs.map((doc) =>
       normalizePoint(doc.data() as Record<string, unknown>)
     );
@@ -252,7 +271,7 @@ export async function loadTelemetry(): Promise<TelemetryLoadResult> {
       : {
           points: [],
           source: "firebase",
-          info: `firebase_documents_not_mapped_docs_${snapshot.docs.length}_example_missing_${
+          info: `firebase_documents_not_mapped_db_${firebaseDatabaseId || "default"}_collection_${COLLECTION}_docs_${snapshot.docs.length}_example_missing_${
             mapped.find((entry) => entry.missing.length > 0)?.missing.join(",") ??
             "unknown"
           }`
