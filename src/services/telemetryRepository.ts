@@ -70,6 +70,10 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     "hashrateGh",
     "hashrate",
     "hashRate",
+    "decision.hashrate",
+    "miner.hashRate",
+    "miner.hashrateMonitor.asics.0.total",
+    "miner.expectedHashrate",
     "payload.decision.hashrate",
     "payload.miner.hashRate",
     "payload.miner.hashrateMonitor.total",
@@ -82,6 +86,8 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     "tempChipC",
     "temp_chip",
     "chipTemp",
+    "decision.chip",
+    "miner.temp",
     "payload.decision.chip",
     "payload.miner.temp",
     "tempChip",
@@ -96,6 +102,8 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
       "vrTemp",
       "tempVr",
       "temperatureVr",
+      "decision.vr",
+      "miner.vrTemp",
       "payload.decision.vr",
       "payload.miner.vrTemp"
     ],
@@ -106,22 +114,35 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     "power",
     "watts",
     "consumptionW",
+    "decision.power",
+    "miner.power",
     "payload.decision.power",
     "payload.miner.power"
   ]);
   const fanPercent = pickNumber(
     raw,
-    ["fanPercent", "fan", "fan_pct", "payload.miner.fanspeed"],
+    ["fanPercent", "fan", "fan_pct", "miner.fanspeed", "payload.miner.fanspeed"],
     0
   );
   const acceptedShares = pickNumber(
     raw,
-    ["acceptedShares", "sharesAccepted", "shares", "payload.miner.sharesAccepted"],
+    [
+      "acceptedShares",
+      "sharesAccepted",
+      "shares",
+      "miner.sharesAccepted",
+      "payload.miner.sharesAccepted"
+    ],
     0
   );
   const rejectedShares = pickNumber(
     raw,
-    ["rejectedShares", "sharesRejected", "payload.miner.sharesRejected"],
+    [
+      "rejectedShares",
+      "sharesRejected",
+      "miner.sharesRejected",
+      "payload.miner.sharesRejected"
+    ],
     0
   );
 
@@ -138,11 +159,13 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     pickNumber(raw, [
       "efficiencyWTh",
       "efficiency",
+      "decision.eff_w_per_gh",
       "payload.decision.eff_w_per_gh"
     ]) ??
     (powerW > 0 ? (powerW * 1000) / hashrateGh : 0);
 
   const normalizedEfficiencyWTh =
+    readPath(raw, "decision.eff_w_per_gh") !== undefined ||
     readPath(raw, "payload.decision.eff_w_per_gh") !== undefined
       ? efficiencyWTh * 1000
       : efficiencyWTh;
