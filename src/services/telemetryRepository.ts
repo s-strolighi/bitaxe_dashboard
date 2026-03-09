@@ -8,6 +8,7 @@ const COLLECTION = import.meta.env.VITE_FIREBASE_COLLECTION || "telemetry";
 export type TelemetryLoadResult = {
   points: TelemetryPoint[];
   source: "firebase" | "mock";
+  info?: string;
 };
 
 function toFiniteNumber(value: unknown): number | null {
@@ -46,7 +47,8 @@ function pickTimestamp(raw: Record<string, unknown>): number | null {
   for (const direct of candidates) {
     if (typeof direct === "number") return direct;
     if (typeof direct === "string") {
-      const fromString = Date.parse(direct);
+      const normalized = direct.replace(/(\.\d{3})\d+/, "$1");
+      const fromString = Date.parse(normalized);
       if (Number.isFinite(fromString)) return fromString;
     }
     if (
@@ -160,7 +162,7 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
 
 export async function loadTelemetry(): Promise<TelemetryLoadResult> {
   if (!isFirebaseConfigured || !db) {
-    return { points: mockTelemetry, source: "mock" };
+    return { points: mockTelemetry, source: "mock", info: "firebase_not_configured" };
   }
 
   try {
@@ -181,8 +183,8 @@ export async function loadTelemetry(): Promise<TelemetryLoadResult> {
 
     return points.length > 0
       ? { points, source: "firebase" }
-      : { points: mockTelemetry, source: "mock" };
+      : { points: [], source: "firebase", info: "firebase_documents_not_mapped" };
   } catch {
-    return { points: mockTelemetry, source: "mock" };
+    return { points: [], source: "firebase", info: "firebase_read_error" };
   }
 }

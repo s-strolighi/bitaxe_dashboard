@@ -26,12 +26,14 @@ function App() {
   const [range, setRange] = useState<TimeRange>("24h");
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<"firebase" | "mock">("mock");
+  const [sourceInfo, setSourceInfo] = useState<string | null>(null);
 
   useEffect(() => {
     async function run() {
-      const { points, source } = await loadTelemetry();
+      const { points, source, info } = await loadTelemetry();
       setRawTelemetry(points);
       setDataSource(source);
+      setSourceInfo(info ?? null);
       setLoading(false);
     }
 
@@ -41,6 +43,14 @@ function App() {
   const telemetry = useMemo(
     () => filterByRange(rawTelemetry, range),
     [rawTelemetry, range]
+  );
+  const telemetryForCharts = useMemo(
+    () =>
+      telemetry.map((point) => ({
+        ...point,
+        hashrateTh: point.hashrateGh / 1000
+      })),
+    [telemetry]
   );
   const stats = useMemo(() => calculateStats(telemetry), [telemetry]);
 
@@ -61,6 +71,7 @@ function App() {
           <p>
             Fonte dati: <strong>{dataSource === "firebase" ? "Firebase" : "Mock"}</strong>
           </p>
+          {sourceInfo ? <p>Stato sorgente: {sourceInfo}</p> : null}
         </div>
         <RangeSelector value={range} onChange={setRange} />
       </header>
@@ -68,12 +79,12 @@ function App() {
       <section className="kpi-grid">
         <KpiCard
           label="Best hashrate"
-          value={`${formatNumber(stats.bestHashrate, 2)} GH/s`}
+          value={`${formatNumber(stats.bestHashrate / 1000, 3)} TH/s`}
           tone="good"
         />
         <KpiCard
           label="Hashrate medio"
-          value={`${formatNumber(stats.avgHashrate, 2)} GH/s`}
+          value={`${formatNumber(stats.avgHashrate / 1000, 3)} TH/s`}
         />
         <KpiCard
           label="Temp chip min/max"
@@ -104,7 +115,7 @@ function App() {
       <section className="charts-grid">
         <ChartCard title="Hashrate vs Temperature" subtitle="Chip e VR confrontate nel tempo">
           <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={telemetry}>
+            <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
               <XAxis
                 dataKey="timestamp"
@@ -126,8 +137,8 @@ function App() {
               <Line
                 yAxisId="left"
                 type="monotone"
-                dataKey="hashrateGh"
-                name="Hashrate GH/s"
+                dataKey="hashrateTh"
+                name="Hashrate TH/s"
                 stroke="#25c2a0"
                 strokeWidth={2}
                 dot={false}
