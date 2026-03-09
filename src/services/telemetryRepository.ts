@@ -37,6 +37,12 @@ function readPath(raw: Record<string, unknown>, path: string): unknown {
   }, raw);
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
 function pickNumber(
   raw: Record<string, unknown>,
   keys: string[],
@@ -54,6 +60,9 @@ function pickTimestamp(raw: Record<string, unknown>): number | null {
     readPath(raw, "timestamp"),
     readPath(raw, "ts"),
     readPath(raw, "uploadedAt"),
+    readPath(raw, "createdAt"),
+    readPath(raw, "time"),
+    readPath(raw, "date"),
     readPath(raw, "payload.ts"),
     readPath(raw, "payload.uploadedAt")
   ];
@@ -78,9 +87,17 @@ function pickTimestamp(raw: Record<string, unknown>): number | null {
   return null;
 }
 
-function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
-  const timestamp = pickTimestamp(raw);
-  const hashrateGh = pickNumber(raw, [
+function normalizePoint(raw: Record<string, unknown>): {
+  point: TelemetryPoint | null;
+  missing: string[];
+} {
+  const payload = asRecord(readPath(raw, "payload"));
+  const data = asRecord(readPath(raw, "data"));
+  const telemetry = asRecord(readPath(raw, "telemetry"));
+  const merged = { ...raw, ...(payload ?? {}), ...(data ?? {}), ...(telemetry ?? {}) };
+
+  const timestamp = pickTimestamp(merged);
+  const hashrateGh = pickNumber(merged, [
     "hashrateGh",
     "hashrate",
     "hashRate",
@@ -96,7 +113,7 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     "ghs",
     "ghs5s"
   ]);
-  const tempChipC = pickNumber(raw, [
+  const tempChipC = pickNumber(merged, [
     "tempChipC",
     "temp_chip",
     "chipTemp",
@@ -109,7 +126,7 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     "temp"
   ]);
   const tempVrC = pickNumber(
-    raw,
+    merged,
     [
       "tempVrC",
       "temp_vr",
@@ -123,7 +140,7 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     ],
     tempChipC ?? 0
   );
-  const powerW = pickNumber(raw, [
+  const powerW = pickNumber(merged, [
     "powerW",
     "power",
     "watts",
@@ -134,12 +151,12 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     "payload.miner.power"
   ]);
   const fanPercent = pickNumber(
-    raw,
+    merged,
     ["fanPercent", "fan", "fan_pct", "miner.fanspeed", "payload.miner.fanspeed"],
     0
   );
   const acceptedShares = pickNumber(
-    raw,
+    merged,
     [
       "acceptedShares",
       "sharesAccepted",
@@ -150,7 +167,7 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     0
   );
   const rejectedShares = pickNumber(
-    raw,
+    merged,
     [
       "rejectedShares",
       "sharesRejected",
@@ -160,40 +177,45 @@ function normalizePoint(raw: Record<string, unknown>): TelemetryPoint | null {
     0
   );
 
-  if (
-    timestamp === null ||
-    hashrateGh === null ||
-    tempChipC === null ||
-    powerW === null
-  ) {
-    return null;
-  }
+  const missing: string[] = [];
+  if (timestamp === null) missing.push("timestamp");
+  if (hashrateGh === null) missing.push("hashrate");
+  if (tempChipC === null) missing.push("tempChip");
+  if (powerW === null) missing.push("power");
+  if (missing.length > 0) return { point: null, missing };
+  const safeTimestamp = timestamp!;
+  const safeHashrateGh = hashrateGh!;
+  const safeTempChipC = tempChipC!;
+  const safePowerW = powerW!;
 
   const efficiencyWTh =
-    pickNumber(raw, [
+    pickNumber(merged, [
       "efficiencyWTh",
       "efficiency",
       "decision.eff_w_per_gh",
       "payload.decision.eff_w_per_gh"
     ]) ??
-    (powerW > 0 ? (powerW * 1000) / hashrateGh : 0);
+    (safePowerW > 0 ? (safePowerW * 1000) / safeHashrateGh : 0);
 
   const normalizedEfficiencyWTh =
-    readPath(raw, "decision.eff_w_per_gh") !== undefined ||
-    readPath(raw, "payload.decision.eff_w_per_gh") !== undefined
+    readPath(merged, "decision.eff_w_per_gh") !== undefined ||
+    readPath(merged, "payload.decision.eff_w_per_gh") !== undefined
       ? efficiencyWTh * 1000
       : efficiencyWTh;
 
   return {
-    timestamp,
-    hashrateGh,
-    tempChipC,
-    tempVrC: tempVrC ?? tempChipC,
-    powerW,
-    efficiencyWTh: normalizedEfficiencyWTh,
-    fanPercent: fanPercent ?? 0,
-    acceptedShares: acceptedShares ?? 0,
-    rejectedShares: rejectedShares ?? 0
+    point: {
+      timestamp: safeTimestamp,
+      hashrateGh: safeHashrateGh,
+      tempChipC: safeTempChipC,
+      tempVrC: tempVrC ?? safeTempChipC,
+      powerW: safePowerW,
+      efficiencyWTh: normalizedEfficiencyWTh,
+      fanPercent: fanPercent ?? 0,
+      acceptedShares: acceptedShares ?? 0,
+      rejectedShares: rejectedShares ?? 0
+    },
+    missing: []
   };
 }
 
@@ -217,14 +239,24 @@ export async function loadTelemetry(): Promise<TelemetryLoadResult> {
     } catch {
       snapshot = await getDocs(collection(db, COLLECTION));
     }
-    const points = snapshot.docs
-      .map((doc) => normalizePoint(doc.data()))
+    const mapped = snapshot.docs.map((doc) =>
+      normalizePoint(doc.data() as Record<string, unknown>)
+    );
+    const points = mapped
+      .map((entry) => entry.point)
       .filter((point): point is TelemetryPoint => Boolean(point));
     points.sort((a, b) => a.timestamp - b.timestamp);
 
     return points.length > 0
       ? { points, source: "firebase" }
-      : { points: [], source: "firebase", info: "firebase_documents_not_mapped" };
+      : {
+          points: [],
+          source: "firebase",
+          info: `firebase_documents_not_mapped_docs_${snapshot.docs.length}_example_missing_${
+            mapped.find((entry) => entry.missing.length > 0)?.missing.join(",") ??
+            "unknown"
+          }`
+        };
   } catch (error) {
     return {
       points: [],
