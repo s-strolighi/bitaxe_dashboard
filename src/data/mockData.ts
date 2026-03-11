@@ -23,6 +23,9 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
     );
     const acceptedShares = Math.max(0, Math.round(8 + wave * 3 + Math.random() * 6));
     const rejectedShares = Math.max(0, Math.round(Math.random() * 2 - wave));
+    const sharesTotal = acceptedShares + rejectedShares;
+    const sharesRejected = rejectedShares;
+    const event = null;
 
     return {
       timestamp,
@@ -35,8 +38,9 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
       efficiencyWPerTH,
       blockFound,
       fanPercent,
-      acceptedShares,
-      rejectedShares
+      sharesTotal,
+      sharesRejected,
+      event
     };
   }
 );

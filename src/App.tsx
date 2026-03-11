@@ -7,6 +7,7 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
+  Scatter,
   Tooltip,
   XAxis,
   YAxis
@@ -28,17 +29,26 @@ import type { TelemetryPoint, TimeRange } from "./types";
 
 function App() {
   const [rawTelemetry, setRawTelemetry] = useState<TelemetryPoint[]>([]);
-  const [range, setRange] = useState<TimeRange>("24h");
+  const [range, setRange] = useState<TimeRange>("1d");
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<"firebase" | "mock">("mock");
   const [sourceInfo, setSourceInfo] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<{
+    collection: string;
+    database: string;
+    docCount: number;
+    sampleCount: number;
+    validCount: number;
+    dayIds: string[];
+  } | null>(null);
 
   useEffect(() => {
     async function run() {
-      const { points, source, info } = await loadTelemetry();
+      const { points, source, info, debug } = await loadTelemetry();
       setRawTelemetry(points);
       setDataSource(source);
       setSourceInfo(info ?? null);
+      setDebugInfo(debug ?? null);
       setLoading(false);
     }
 
@@ -50,6 +60,14 @@ function App() {
     [rawTelemetry, range]
   );
   const telemetryForCharts = useMemo(() => buildChartPoints(telemetry), [telemetry]);
+  const eventUpPoints = useMemo(
+    () => telemetryForCharts.filter((point) => point.event === "tuning_up"),
+    [telemetryForCharts]
+  );
+  const eventDownPoints = useMemo(
+    () => telemetryForCharts.filter((point) => point.event === "tuning_down"),
+    [telemetryForCharts]
+  );
   const stats = useMemo(() => calculateStats(telemetry), [telemetry]);
 
   if (loading) {
@@ -196,6 +214,20 @@ function App() {
                 strokeWidth={2}
                 dot={false}
               />
+              <Scatter
+                yAxisId="left"
+                data={eventUpPoints}
+                dataKey="hashrateTh"
+                name="Tuning up"
+                fill="#7ef7ac"
+              />
+              <Scatter
+                yAxisId="left"
+                data={eventDownPoints}
+                dataKey="hashrateTh"
+                name="Tuning down"
+                fill="#ff8a48"
+              />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -252,6 +284,20 @@ function App() {
                 strokeWidth={2}
                 dot={false}
               />
+              <Scatter
+                yAxisId="left"
+                data={eventUpPoints}
+                dataKey="powerW"
+                name="Tuning up"
+                fill="#7ef7ac"
+              />
+              <Scatter
+                yAxisId="left"
+                data={eventDownPoints}
+                dataKey="powerW"
+                name="Tuning down"
+                fill="#ff8a48"
+              />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -300,6 +346,18 @@ function App() {
                 stroke="#ffcc66"
                 strokeWidth={2}
                 dot={false}
+              />
+              <Scatter
+                data={eventUpPoints}
+                dataKey="tempChipC"
+                name="Tuning up"
+                fill="#7ef7ac"
+              />
+              <Scatter
+                data={eventDownPoints}
+                dataKey="tempChipC"
+                name="Tuning down"
+                fill="#ff8a48"
               />
             </LineChart>
           </ResponsiveContainer>
@@ -370,6 +428,20 @@ function App() {
                 strokeWidth={2}
                 dot={false}
               />
+              <Scatter
+                yAxisId="left"
+                data={eventUpPoints}
+                dataKey="hashrateTh"
+                name="Tuning up"
+                fill="#7ef7ac"
+              />
+              <Scatter
+                yAxisId="left"
+                data={eventDownPoints}
+                dataKey="hashrateTh"
+                name="Tuning down"
+                fill="#ff8a48"
+              />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -381,6 +453,13 @@ function App() {
         <p>
           Campioni analizzati: <strong>{stats.totalSamples}</strong>
         </p>
+        {debugInfo ? (
+          <p className="debug-banner">
+            Debug: db `{debugInfo.database}`, collection `{debugInfo.collection}`, docs{" "}
+            {debugInfo.docCount}, samples {debugInfo.sampleCount}, valid{" "}
+            {debugInfo.validCount}, giorni {debugInfo.dayIds.join(", ") || "-"}
+          </p>
+        ) : null}
       </footer>
     </main>
   );

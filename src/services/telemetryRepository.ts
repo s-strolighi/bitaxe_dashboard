@@ -1,11 +1,4 @@
-import {
-  collection,
-  collectionGroup,
-  getDocs,
-  limit,
-  orderBy,
-  query
-} from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { mockTelemetry } from "../data/mockData";
 import type { TelemetryPoint } from "../types";
 import {
@@ -21,6 +14,14 @@ export type TelemetryLoadResult = {
   points: TelemetryPoint[];
   source: "firebase" | "mock";
   info?: string;
+  debug?: {
+    collection: string;
+    database: string;
+    docCount: number;
+    sampleCount: number;
+    validCount: number;
+    dayIds: string[];
+  };
 };
 
 function formatFirebaseError(error: unknown): string {
@@ -99,7 +100,7 @@ function pickTimestamp(raw: Record<string, unknown>): number | null {
   return null;
 }
 
-function normalizePoint(raw: Record<string, unknown>): {
+function normalizeSample(raw: Record<string, unknown>): {
   point: TelemetryPoint | null;
   missing: string[];
 } {
@@ -109,6 +110,7 @@ function normalizePoint(raw: Record<string, unknown>): {
   const merged = { ...raw, ...(payload ?? {}), ...(data ?? {}), ...(telemetry ?? {}) };
 
   const timestamp = pickTimestamp(merged);
+  const hashrateTh = pickNumber(merged, ["hashrate_th", "hashrateTh"], null);
   const hashrateGh = pickNumber(merged, [
     "hashrateGh",
     "hashrate",
@@ -125,7 +127,10 @@ function normalizePoint(raw: Record<string, unknown>): {
     "ghs",
     "ghs5s"
   ]);
+  const resolvedHashrateGh =
+    hashrateTh !== null ? hashrateTh * 1000 : hashrateGh;
   const tempChipC = pickNumber(merged, [
+    "chip_temp_c",
     "tempChipC",
     "temp_chip",
     "chipTemp",
@@ -140,6 +145,7 @@ function normalizePoint(raw: Record<string, unknown>): {
   const tempVrC = pickNumber(
     merged,
     [
+      "vr_temp_c",
       "tempVrC",
       "temp_vr",
       "vrTemp",
@@ -155,6 +161,7 @@ function normalizePoint(raw: Record<string, unknown>): {
   const ambientTempC = pickNumber(
     merged,
     [
+      "ambient_temp_c",
       "ambientTempC",
       "ambient.temp_c",
       "payload.ambient.temp_c",
@@ -168,6 +175,7 @@ function normalizePoint(raw: Record<string, unknown>): {
   const ambientHumidityPct = pickNumber(
     merged,
     [
+      "ambient_humidity_pct",
       "ambientHumidityPct",
       "ambient.humidity_pct",
       "payload.ambient.humidity_pct",
@@ -178,6 +186,7 @@ function normalizePoint(raw: Record<string, unknown>): {
     null
   );
   const powerW = pickNumber(merged, [
+    "power_w",
     "powerW",
     "power",
     "watts",
@@ -197,41 +206,34 @@ function normalizePoint(raw: Record<string, unknown>): {
     ["blockFound", "blocksFound", "miner.blockFound", "payload.miner.blockFound"],
     0
   );
-  const acceptedShares = pickNumber(
+  const sharesTotal = pickNumber(
     merged,
-    [
-      "acceptedShares",
-      "sharesAccepted",
-      "shares",
-      "miner.sharesAccepted",
-      "payload.miner.sharesAccepted"
-    ],
+    ["shares_total", "sharesTotal", "shares", "miner.sharesAccepted"],
     0
   );
-  const rejectedShares = pickNumber(
+  const sharesRejected = pickNumber(
     merged,
-    [
-      "rejectedShares",
-      "sharesRejected",
-      "miner.sharesRejected",
-      "payload.miner.sharesRejected"
-    ],
+    ["shares_rejected", "sharesRejected", "miner.sharesRejected"],
     0
   );
+  const event = readPath(merged, "event");
+  const normalizedEvent =
+    event === "tuning_up" || event === "tuning_down" ? event : null;
 
   const missing: string[] = [];
   if (timestamp === null) missing.push("timestamp");
-  if (hashrateGh === null) missing.push("hashrate");
+  if (resolvedHashrateGh === null) missing.push("hashrate");
   if (tempChipC === null) missing.push("tempChip");
   if (powerW === null) missing.push("power");
   if (missing.length > 0) return { point: null, missing };
   const safeTimestamp = timestamp!;
-  const safeHashrateGh = hashrateGh!;
+  const safeHashrateGh = resolvedHashrateGh!;
   const safeTempChipC = tempChipC!;
   const safePowerW = powerW!;
 
   const efficiencyWPerTH =
     pickNumber(merged, [
+      "eff_w_per_th",
       "efficiencyWPerTH",
       "efficiencyWTh",
       "efficiency",
@@ -260,11 +262,38 @@ function normalizePoint(raw: Record<string, unknown>): {
       efficiencyWPerTH: normalizedEfficiencyWPerTH,
       blockFound: blockFound ?? 0,
       fanPercent: fanPercent ?? 0,
-      acceptedShares: acceptedShares ?? 0,
-      rejectedShares: rejectedShares ?? 0
+      sharesTotal: sharesTotal ?? 0,
+      sharesRejected: sharesRejected ?? 0,
+      event: normalizedEvent
     },
     missing: []
   };
+}
+
+function extractDailySamples(data: Record<string, unknown>): Record<string, unknown>[] {
+  const candidates = [
+    readPath(data, "samples"),
+    readPath(data, "data"),
+    readPath(data, "points"),
+    readPath(data, "measurements"),
+    readPath(data, "telemetry")
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate.filter((item) => typeof item === "object" && item !== null) as Record<
+        string,
+        unknown
+      >[];
+    }
+  }
+  const values = Object.values(data);
+  if (values.length > 0 && values.every((item) => typeof item === "object" && item !== null)) {
+    const maybeSamples = values as Record<string, unknown>[];
+    if (maybeSamples.some((item) => typeof item.ts === "string")) {
+      return maybeSamples;
+    }
+  }
+  return [];
 }
 
 export async function loadTelemetry(): Promise<TelemetryLoadResult> {
@@ -277,46 +306,65 @@ export async function loadTelemetry(): Promise<TelemetryLoadResult> {
   }
 
   try {
-    let snapshot;
-    try {
-      const telemetryQuery = query(
-        collection(db, COLLECTION),
-        orderBy("timestamp", "asc")
-      );
-      snapshot = await getDocs(telemetryQuery);
-    } catch {
-      snapshot = await getDocs(collection(db, COLLECTION));
-    }
-    if (snapshot.docs.length === 0) {
-      try {
-        snapshot = await getDocs(query(collectionGroup(db, "telemetry"), limit(500)));
-      } catch {
-        snapshot = await getDocs(query(collectionGroup(db, "current"), limit(500)));
+    const snapshot = await getDocs(collection(db, COLLECTION));
+    let sampleCount = 0;
+    const mapped = snapshot.docs.flatMap((doc) => {
+      const data = doc.data() as Record<string, unknown>;
+      const samples = extractDailySamples(data);
+      if (samples.length === 0) {
+        sampleCount += 1;
+        return [normalizeSample(data)];
       }
-    }
-    const mapped = snapshot.docs.map((doc) =>
-      normalizePoint(doc.data() as Record<string, unknown>)
-    );
+      sampleCount += samples.length;
+      return samples.map((sample) => normalizeSample(sample));
+    });
     const points = mapped
       .map((entry) => entry.point)
       .filter((point): point is TelemetryPoint => Boolean(point));
     points.sort((a, b) => a.timestamp - b.timestamp);
 
     return points.length > 0
-      ? { points, source: "firebase" }
+      ? {
+          points,
+          source: "firebase",
+          debug: {
+            collection: COLLECTION,
+            database: firebaseDatabaseId || "default",
+            docCount: snapshot.docs.length,
+            sampleCount,
+            validCount: points.length,
+            dayIds: snapshot.docs.map((doc) => doc.id)
+          }
+        }
       : {
           points: [],
           source: "firebase",
           info: `firebase_documents_not_mapped_db_${firebaseDatabaseId || "default"}_collection_${COLLECTION}_docs_${snapshot.docs.length}_example_missing_${
             mapped.find((entry) => entry.missing.length > 0)?.missing.join(",") ??
             "unknown"
-          }`
+          }`,
+          debug: {
+            collection: COLLECTION,
+            database: firebaseDatabaseId || "default",
+            docCount: snapshot.docs.length,
+            sampleCount,
+            validCount: 0,
+            dayIds: snapshot.docs.map((doc) => doc.id)
+          }
         };
   } catch (error) {
     return {
       points: [],
       source: "firebase",
-      info: `firebase_read_error_${formatFirebaseError(error)}`
+      info: `firebase_read_error_${formatFirebaseError(error)}`,
+      debug: {
+        collection: COLLECTION,
+        database: firebaseDatabaseId || "default",
+        docCount: 0,
+        sampleCount: 0,
+        validCount: 0,
+        dayIds: []
+      }
     };
   }
 }

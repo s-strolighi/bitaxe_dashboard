@@ -9,8 +9,9 @@ export type TelemetryPoint = {
   efficiencyWPerTH: number;
   blockFound: number;
   fanPercent: number;
-  acceptedShares: number;
-  rejectedShares: number;
+  sharesTotal: number;
+  sharesRejected: number;
+  event: "tuning_up" | "tuning_down" | null;
 };
 
 export type DashboardStats = {
@@ -32,4 +33,16 @@ export type DashboardStats = {
   blocksFound: number;
 };
 
-export type TimeRange = "6h" | "24h" | "7d" | "30d" | "all";
+export type TimeRange =
+  | "1h"
+  | "3h"
+  | "6h"
+  | "1d"
+  | "3d"
+  | "7d"
+  | "15d"
+  | "1mo"
+  | "3mo"
+  | "6mo"
+  | "1y"
+  | "all";
