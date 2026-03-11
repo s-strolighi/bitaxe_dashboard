@@ -114,6 +114,7 @@ export function formatTimestamp(timestamp: number): string {
 export type ChartPoint = TelemetryPoint & {
   hashrateTh: number;
   efficiencyCalcWPerTH: number;
+  efficiencyWPerTH: number;
   acceptedSharesDelta: number;
   rejectedSharesDelta: number;
 };
@@ -126,6 +127,12 @@ export function buildChartPoints(telemetry: TelemetryPoint[]): ChartPoint[] {
       hashrateTh: point.hashrateGh / 1000,
       efficiencyCalcWPerTH:
         point.hashrateGh > 0 ? (point.powerW * 1000) / point.hashrateGh : 0,
+      efficiencyWPerTH:
+        Number.isFinite(point.efficiencyWPerTH) && point.efficiencyWPerTH > 0
+          ? point.efficiencyWPerTH
+          : point.hashrateGh > 0
+            ? (point.powerW * 1000) / point.hashrateGh
+            : 0,
       acceptedSharesDelta: prev
         ? Math.max(0, point.sharesTotal - prev.sharesTotal)
         : 0,

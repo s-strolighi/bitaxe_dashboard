@@ -103,49 +103,66 @@ function App() {
         </article>
       </section>
 
-      <section className="kpi-grid">
-        <KpiCard
-          label="Best hashrate"
-          value={`${formatNumber(stats.bestHashrate / 1000, 2)} TH/s`}
-          tone="good"
-        />
-        <KpiCard
-          label="Hashrate medio"
-          value={`${formatNumber(stats.avgHashrate / 1000, 2)} TH/s`}
-        />
-        <KpiCard
-          label="Temp chip min/max"
-          value={`${formatNumber(stats.minTempChip, 1)} / ${formatNumber(stats.maxTempChip, 1)} °C`}
-          tone={stats.maxTempChip >= 75 ? "warn" : "default"}
-        />
-        <KpiCard
-          label="Temp VR min/max"
-          value={`${formatNumber(stats.minTempVr, 1)} / ${formatNumber(stats.maxTempVr, 1)} °C`}
-          tone={stats.maxTempVr >= 85 ? "warn" : "default"}
-        />
-        {stats.minAmbientTemp !== null && stats.maxAmbientTemp !== null ? (
+      <section className="kpi-groups">
+        <div className="kpi-group">
           <KpiCard
-            label="Temp esterna min/max"
-            value={`${formatNumber(stats.minAmbientTemp, 1)} / ${formatNumber(
-              stats.maxAmbientTemp,
-              1
-            )} °C`}
+            label="Best hashrate"
+            value={`${formatNumber(stats.bestHashrate / 1000, 2)} TH/s`}
+            tone="good"
           />
-        ) : null}
-        <KpiCard
-          label="Potenza media"
-          value={`${formatNumber(stats.avgPower, 1)} W`}
-        />
-        <KpiCard
-          label="Efficienza media"
-          value={`${formatNumber(stats.estimatedEfficiency, 1)} W/TH`}
-        />
-        <KpiCard
-          label="Share reject rate"
-          value={`${formatNumber(stats.rejectionRatePct)} %`}
-          tone={stats.rejectionRatePct > 2 ? "warn" : "default"}
-        />
-        <KpiCard label="Shares totali" value={formatCompactNumber(stats.totalShares)} />
+          <KpiCard
+            label="Hashrate medio"
+            value={`${formatNumber(stats.avgHashrate / 1000, 2)} TH/s`}
+          />
+          <KpiCard
+            label="Share reject rate"
+            value={`${formatNumber(stats.rejectionRatePct)} %`}
+            tone={stats.rejectionRatePct > 2 ? "warn" : "default"}
+          />
+          <KpiCard label="Shares totali" value={formatCompactNumber(stats.totalShares)} />
+        </div>
+        <div className="kpi-group">
+          <KpiCard
+            label="Temp chip max"
+            value={`${formatNumber(stats.maxTempChip, 1)} °C`}
+            tone={stats.maxTempChip >= 75 ? "warn" : "default"}
+          />
+          <KpiCard
+            label="Temp chip min"
+            value={`${formatNumber(stats.minTempChip, 1)} °C`}
+          />
+          <KpiCard
+            label="Potenza media"
+            value={`${formatNumber(stats.avgPower, 1)} W`}
+          />
+          <KpiCard
+            label="Efficienza media"
+            value={`${formatNumber(stats.estimatedEfficiency, 1)} W/TH`}
+          />
+        </div>
+        <div className="kpi-group">
+          <KpiCard
+            label="Temp VR max"
+            value={`${formatNumber(stats.maxTempVr, 1)} °C`}
+            tone={stats.maxTempVr >= 85 ? "warn" : "default"}
+          />
+          <KpiCard
+            label="Temp VR min"
+            value={`${formatNumber(stats.minTempVr, 1)} °C`}
+          />
+          {stats.maxAmbientTemp !== null ? (
+            <KpiCard
+              label="Temp esterna max"
+              value={`${formatNumber(stats.maxAmbientTemp, 1)} °C`}
+            />
+          ) : null}
+          {stats.minAmbientTemp !== null ? (
+            <KpiCard
+              label="Temp esterna min"
+              value={`${formatNumber(stats.minAmbientTemp, 1)} °C`}
+            />
+          ) : null}
+        </div>
       </section>
 
       <section className="charts-grid">
@@ -278,7 +295,7 @@ function App() {
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="efficiencyCalcWPerTH"
+                dataKey="efficiencyWPerTH"
                 name="Efficienza W/TH"
                 stroke="#ffd166"
                 strokeWidth={2}
