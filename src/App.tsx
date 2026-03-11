@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
   Legend,
   Line,
@@ -51,7 +49,7 @@ function App() {
     () => filterByRange(rawTelemetry, range),
     [rawTelemetry, range]
   );
-  const telemetryForCharts = useMemo(() => buildChartPoints(telemetry, 96), [telemetry]);
+  const telemetryForCharts = useMemo(() => buildChartPoints(telemetry), [telemetry]);
   const stats = useMemo(() => calculateStats(telemetry), [telemetry]);
 
   if (loading) {
@@ -107,6 +105,15 @@ function App() {
           value={`${formatNumber(stats.minTempVr, 1)} / ${formatNumber(stats.maxTempVr, 1)} °C`}
           tone={stats.maxTempVr >= 85 ? "warn" : "default"}
         />
+        {stats.minAmbientTemp !== null && stats.maxAmbientTemp !== null ? (
+          <KpiCard
+            label="Temp esterna min/max"
+            value={`${formatNumber(stats.minAmbientTemp, 1)} / ${formatNumber(
+              stats.maxAmbientTemp,
+              1
+            )} °C`}
+          />
+        ) : null}
         <KpiCard
           label="Potenza media"
           value={`${formatNumber(stats.avgPower, 1)} W`}
@@ -239,7 +246,7 @@ function App() {
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="efficiencyCalcWTh"
+                dataKey="efficiencyCalcWPerTH"
                 name="Efficienza W/TH"
                 stroke="#ffd166"
                 strokeWidth={2}
@@ -249,9 +256,9 @@ function App() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Shares accettate/rifiutate" subtitle="Per campione">
+        <ChartCard title="Temperature" subtitle="Esterna, chip e VR">
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={telemetryForCharts}>
+            <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
               <XAxis
                 dataKey="timestamp"
@@ -262,17 +269,108 @@ function App() {
                   })
                 }
               />
-              <YAxis tickFormatter={(value: number) => formatCompactNumber(value)} />
+              <YAxis tickFormatter={(value: number) => formatNumber(value, 1)} />
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
                 labelStyle={{ color: "#d4def5" }}
                 labelFormatter={(value: number) => formatTimestamp(value)}
-                formatter={(value: number, name: string) => [formatCompactNumber(value), name]}
+                formatter={(value: number, name: string) => [formatNumber(value, 1), name]}
               />
               <Legend />
-              <Bar dataKey="acceptedSharesDelta" name="Accettate (delta)" fill="#25c2a0" />
-              <Bar dataKey="rejectedSharesDelta" name="Rifiutate (delta)" fill="#ff5f5f" />
-            </BarChart>
+              <Line
+                type="monotone"
+                dataKey="ambientTempC"
+                name="Temp esterna °C"
+                stroke="#7aa2ff"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="tempChipC"
+                name="Temp chip °C"
+                stroke="#ff8a48"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="tempVrC"
+                name="Temp VR °C"
+                stroke="#ffcc66"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard
+          className="chart-card-wide"
+          title="Hashrate e temperatura esterna"
+          subtitle="Hashrate, temp esterna e temp chip"
+        >
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={telemetryForCharts}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
+              <XAxis
+                dataKey="timestamp"
+                tickFormatter={(value: number) =>
+                  new Date(value).toLocaleTimeString("it-IT", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })
+                }
+              />
+              <YAxis
+                yAxisId="left"
+                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
+                tickFormatter={(value: number) => formatNumber(value, 2)}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                domain={[(value: number) => value - 1.5, (value: number) => value + 1.5]}
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+              />
+              <Tooltip
+                contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
+                labelStyle={{ color: "#d4def5" }}
+                labelFormatter={(value: number) => formatTimestamp(value)}
+                formatter={(value: number, name: string) => {
+                  if (name.includes("Hashrate")) return [formatNumber(value, 2), name];
+                  return [formatNumber(value, 1), name];
+                }}
+              />
+              <Legend />
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="hashrateTh"
+                name="Hashrate TH/s"
+                stroke="#25c2a0"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="ambientTempC"
+                name="Temp esterna °C"
+                stroke="#7aa2ff"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="tempChipC"
+                name="Temp chip °C"
+                stroke="#ff8a48"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </ChartCard>
       </section>

@@ -3,8 +3,10 @@ export type TelemetryPoint = {
   hashrateGh: number;
   tempChipC: number;
   tempVrC: number;
+  ambientTempC: number | null;
+  ambientHumidityPct: number | null;
   powerW: number;
-  efficiencyWTh: number;
+  efficiencyWPerTH: number;
   blockFound: number;
   fanPercent: number;
   acceptedShares: number;
@@ -21,6 +23,8 @@ export type DashboardStats = {
   minTempVr: number;
   maxTempVr: number;
   avgTempVr: number;
+  minAmbientTemp: number | null;
+  maxAmbientTemp: number | null;
   avgPower: number;
   estimatedEfficiency: number;
   rejectionRatePct: number;

@@ -58,7 +58,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function pickNumber(
   raw: Record<string, unknown>,
   keys: string[],
-  fallback?: number
+  fallback?: number | null
 ): number | null {
   for (const key of keys) {
     const value = toFiniteNumber(readPath(raw, key));
@@ -152,6 +152,27 @@ function normalizePoint(raw: Record<string, unknown>): {
     ],
     tempChipC ?? 0
   );
+  const ambientTempC = pickNumber(
+    merged,
+    [
+      "ambientTempC",
+      "ambient.temp_c",
+      "payload.ambient.temp_c",
+      "ambient.temperature",
+      "ambient.temp"
+    ],
+    null
+  );
+  const ambientHumidityPct = pickNumber(
+    merged,
+    [
+      "ambientHumidityPct",
+      "ambient.humidity_pct",
+      "payload.ambient.humidity_pct",
+      "ambient.humidity"
+    ],
+    null
+  );
   const powerW = pickNumber(merged, [
     "powerW",
     "power",
@@ -205,8 +226,9 @@ function normalizePoint(raw: Record<string, unknown>): {
   const safeTempChipC = tempChipC!;
   const safePowerW = powerW!;
 
-  const efficiencyWTh =
+  const efficiencyWPerTH =
     pickNumber(merged, [
+      "efficiencyWPerTH",
       "efficiencyWTh",
       "efficiency",
       "decision.eff_w_per_gh",
@@ -214,11 +236,11 @@ function normalizePoint(raw: Record<string, unknown>): {
     ]) ??
     (safePowerW > 0 ? (safePowerW * 1000) / safeHashrateGh : 0);
 
-  const normalizedEfficiencyWTh =
+  const normalizedEfficiencyWPerTH =
     readPath(merged, "decision.eff_w_per_gh") !== undefined ||
     readPath(merged, "payload.decision.eff_w_per_gh") !== undefined
-      ? efficiencyWTh * 1000
-      : efficiencyWTh;
+      ? efficiencyWPerTH * 1000
+      : efficiencyWPerTH;
 
   return {
     point: {
@@ -226,8 +248,10 @@ function normalizePoint(raw: Record<string, unknown>): {
       hashrateGh: safeHashrateGh,
       tempChipC: safeTempChipC,
       tempVrC: tempVrC ?? safeTempChipC,
+      ambientTempC,
+      ambientHumidityPct,
       powerW: safePowerW,
-      efficiencyWTh: normalizedEfficiencyWTh,
+      efficiencyWPerTH: normalizedEfficiencyWPerTH,
       blockFound: blockFound ?? 0,
       fanPercent: fanPercent ?? 0,
       acceptedShares: acceptedShares ?? 0,

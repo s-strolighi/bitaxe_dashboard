@@ -12,8 +12,10 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
     const hashrateGh = Number((490 + wave * 45 + Math.random() * 18).toFixed(2));
     const tempChipC = Number((58 + wave * 6 + Math.random() * 4).toFixed(1));
     const tempVrC = Number((52 + wave * 5 + Math.random() * 3).toFixed(1));
+    const ambientTempC = Number((21 + wave * 1.5 + Math.random()).toFixed(1));
+    const ambientHumidityPct = Math.round(45 + wave * 6 + Math.random() * 4);
     const powerW = Number((13 + wave * 1.2 + Math.random() * 0.8).toFixed(1));
-    const efficiencyWTh = Number(((powerW * 1000) / hashrateGh).toFixed(1));
+    const efficiencyWPerTH = Number(((powerW * 1000) / hashrateGh).toFixed(1));
     const blockFound = 0;
     const fanPercent = Math.max(
       25,
@@ -27,8 +29,10 @@ export const mockTelemetry: TelemetryPoint[] = Array.from(
       hashrateGh,
       tempChipC,
       tempVrC,
+      ambientTempC,
+      ambientHumidityPct,
       powerW,
-      efficiencyWTh,
+      efficiencyWPerTH,
       blockFound,
       fanPercent,
       acceptedShares,

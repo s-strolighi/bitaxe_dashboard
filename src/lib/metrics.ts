@@ -35,6 +35,8 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
       minTempVr: 0,
       maxTempVr: 0,
       avgTempVr: 0,
+      minAmbientTemp: null,
+      maxAmbientTemp: null,
       avgPower: 0,
       estimatedEfficiency: 0,
       rejectionRatePct: 0,
@@ -46,8 +48,11 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
   const hashrates = telemetry.map((point) => point.hashrateGh);
   const chipTemps = telemetry.map((point) => point.tempChipC);
   const vrTemps = telemetry.map((point) => point.tempVrC);
+  const ambientTemps = telemetry
+    .map((point) => point.ambientTempC)
+    .filter((value): value is number => value !== null);
   const powers = telemetry.map((point) => point.powerW);
-  const efficiencies = telemetry.map((point) => point.efficiencyWTh);
+  const efficiencies = telemetry.map((point) => point.efficiencyWPerTH);
   const totalAccepted = telemetry.reduce(
     (acc, point) => acc + point.acceptedShares,
     0
@@ -72,6 +77,10 @@ export function calculateStats(telemetry: TelemetryPoint[]): DashboardStats {
     minTempVr: Math.min(...vrTemps),
     maxTempVr: Math.max(...vrTemps),
     avgTempVr: safeAverage(vrTemps),
+    minAmbientTemp:
+      ambientTemps.length > 0 ? Math.min(...ambientTemps) : null,
+    maxAmbientTemp:
+      ambientTemps.length > 0 ? Math.max(...ambientTemps) : null,
     avgPower,
     estimatedEfficiency: safeAverage(efficiencies),
     rejectionRatePct: totalShares > 0 ? (totalRejected / totalShares) * 100 : 0,
@@ -101,69 +110,27 @@ export function formatTimestamp(timestamp: number): string {
   }).format(new Date(timestamp));
 }
 
-export type AggregatedChartPoint = TelemetryPoint & {
+export type ChartPoint = TelemetryPoint & {
   hashrateTh: number;
-  efficiencyCalcWTh: number;
+  efficiencyCalcWPerTH: number;
   acceptedSharesDelta: number;
   rejectedSharesDelta: number;
 };
 
-export function buildChartPoints(
-  telemetry: TelemetryPoint[],
-  maxPoints = 84
-): AggregatedChartPoint[] {
-  if (telemetry.length <= maxPoints) {
-    return telemetry.map((point, index, list) => {
-      const prev = list[index - 1];
-      return {
-        ...point,
-        hashrateTh: point.hashrateGh / 1000,
-        efficiencyCalcWTh:
-          point.hashrateGh > 0 ? (point.powerW * 1000) / point.hashrateGh : 0,
-        acceptedSharesDelta: prev
-          ? Math.max(0, point.acceptedShares - prev.acceptedShares)
-          : 0,
-        rejectedSharesDelta: prev
-          ? Math.max(0, point.rejectedShares - prev.rejectedShares)
-          : 0
-      };
-    });
-  }
-
-  const bucketSize = Math.ceil(telemetry.length / maxPoints);
-  const output: AggregatedChartPoint[] = [];
-
-  for (let i = 0; i < telemetry.length; i += bucketSize) {
-    const bucket = telemetry.slice(i, i + bucketSize);
-    const first = bucket[0];
-    const last = bucket[bucket.length - 1];
-    const hashrateGh = safeAverage(bucket.map((point) => point.hashrateGh));
-    const tempChipC = safeAverage(bucket.map((point) => point.tempChipC));
-    const tempVrC = safeAverage(bucket.map((point) => point.tempVrC));
-    const powerW = safeAverage(bucket.map((point) => point.powerW));
-    const efficiencyWTh =
-      safeAverage(bucket.map((point) => point.efficiencyWTh)) ||
-      (hashrateGh > 0 ? (powerW * 1000) / hashrateGh : 0);
-    const fanPercent = Math.round(safeAverage(bucket.map((point) => point.fanPercent)));
-    const blockFound = Math.max(...bucket.map((point) => point.blockFound));
-
-    output.push({
-      timestamp: last.timestamp,
-      hashrateGh,
-      hashrateTh: hashrateGh / 1000,
-      efficiencyCalcWTh: hashrateGh > 0 ? (powerW * 1000) / hashrateGh : 0,
-      tempChipC,
-      tempVrC,
-      powerW,
-      efficiencyWTh,
-      fanPercent,
-      blockFound,
-      acceptedShares: last.acceptedShares,
-      rejectedShares: last.rejectedShares,
-      acceptedSharesDelta: Math.max(0, last.acceptedShares - first.acceptedShares),
-      rejectedSharesDelta: Math.max(0, last.rejectedShares - first.rejectedShares)
-    });
-  }
-
-  return output;
+export function buildChartPoints(telemetry: TelemetryPoint[]): ChartPoint[] {
+  return telemetry.map((point, index, list) => {
+    const prev = list[index - 1];
+    return {
+      ...point,
+      hashrateTh: point.hashrateGh / 1000,
+      efficiencyCalcWPerTH:
+        point.hashrateGh > 0 ? (point.powerW * 1000) / point.hashrateGh : 0,
+      acceptedSharesDelta: prev
+        ? Math.max(0, point.acceptedShares - prev.acceptedShares)
+        : 0,
+      rejectedSharesDelta: prev
+        ? Math.max(0, point.rejectedShares - prev.rejectedShares)
+        : 0
+    };
+  });
 }
