@@ -270,14 +270,29 @@ function normalizeSample(raw: Record<string, unknown>): {
   };
 }
 
-function extractDailySamples(data: Record<string, unknown>): Record<string, unknown>[] {
+function extractDailySamples(data: unknown): Record<string, unknown>[] {
+  if (Array.isArray(data)) {
+    return data.filter((item) => typeof item === "object" && item !== null) as Record<
+      string,
+      unknown
+    >[];
+  }
+
+  const root = asRecord(data);
+  if (!root) return [];
+
   const candidates = [
-    readPath(data, "samples"),
-    readPath(data, "data"),
-    readPath(data, "points"),
-    readPath(data, "measurements"),
-    readPath(data, "telemetry")
+    readPath(root, "samples"),
+    readPath(root, "data"),
+    readPath(root, "points"),
+    readPath(root, "measurements"),
+    readPath(root, "telemetry"),
+    readPath(root, "daily"),
+    readPath(root, "entries"),
+    readPath(root, "records"),
+    readPath(root, "values")
   ];
+
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
       return candidate.filter((item) => typeof item === "object" && item !== null) as Record<
@@ -285,8 +300,22 @@ function extractDailySamples(data: Record<string, unknown>): Record<string, unkn
         unknown
       >[];
     }
+    const candidateRecord = asRecord(candidate);
+    if (candidateRecord) {
+      const values = Object.values(candidateRecord);
+      if (
+        values.length > 0 &&
+        values.every((item) => typeof item === "object" && item !== null)
+      ) {
+        const maybeSamples = values as Record<string, unknown>[];
+        if (maybeSamples.some((item) => typeof item.ts === "string")) {
+          return maybeSamples;
+        }
+      }
+    }
   }
-  const values = Object.values(data);
+
+  const values = Object.values(root);
   if (values.length > 0 && values.every((item) => typeof item === "object" && item !== null)) {
     const maybeSamples = values as Record<string, unknown>[];
     if (maybeSamples.some((item) => typeof item.ts === "string")) {
