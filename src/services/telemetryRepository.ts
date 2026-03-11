@@ -158,6 +158,8 @@ function normalizePoint(raw: Record<string, unknown>): {
       "ambientTempC",
       "ambient.temp_c",
       "payload.ambient.temp_c",
+      "ambient.tempC",
+      "payload.ambient.tempC",
       "ambient.temperature",
       "ambient.temp"
     ],
@@ -169,6 +171,8 @@ function normalizePoint(raw: Record<string, unknown>): {
       "ambientHumidityPct",
       "ambient.humidity_pct",
       "payload.ambient.humidity_pct",
+      "ambient.humidityPct",
+      "payload.ambient.humidityPct",
       "ambient.humidity"
     ],
     null
@@ -231,6 +235,8 @@ function normalizePoint(raw: Record<string, unknown>): {
       "efficiencyWPerTH",
       "efficiencyWTh",
       "efficiency",
+      "miner.efficiencyWPerTH",
+      "payload.miner.efficiencyWPerTH",
       "decision.eff_w_per_gh",
       "payload.decision.eff_w_per_gh"
     ]) ??
