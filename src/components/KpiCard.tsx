@@ -1,7 +1,7 @@
 type KpiCardProps = {
   label: string;
   value: string;
-  tone?: "default" | "good" | "warn";
+  tone?: "default" | "good" | "warn" | "warm" | "cool" | "energy" | "hash";
 };
 
 export function KpiCard({ label, value, tone = "default" }: KpiCardProps) {

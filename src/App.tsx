@@ -108,11 +108,12 @@ function App() {
           <KpiCard
             label="Best hashrate"
             value={`${formatNumber(stats.bestHashrate / 1000, 2)} TH/s`}
-            tone="good"
+            tone="hash"
           />
           <KpiCard
             label="Hashrate medio"
             value={`${formatNumber(stats.avgHashrate / 1000, 2)} TH/s`}
+            tone="hash"
           />
           <KpiCard
             label="Share reject rate"
@@ -123,43 +124,49 @@ function App() {
         </div>
         <div className="kpi-group">
           <KpiCard
-            label="Temp chip max"
-            value={`${formatNumber(stats.maxTempChip, 1)} °C`}
-            tone={stats.maxTempChip >= 75 ? "warn" : "default"}
-          />
-          <KpiCard
             label="Temp chip min"
             value={`${formatNumber(stats.minTempChip, 1)} °C`}
+            tone="cool"
+          />
+          <KpiCard
+            label="Temp chip max"
+            value={`${formatNumber(stats.maxTempChip, 1)} °C`}
+            tone="warm"
           />
           <KpiCard
             label="Potenza media"
             value={`${formatNumber(stats.avgPower, 1)} W`}
+            tone="energy"
           />
           <KpiCard
             label="Efficienza media"
             value={`${formatNumber(stats.estimatedEfficiency, 1)} W/TH`}
+            tone="energy"
           />
         </div>
         <div className="kpi-group">
           <KpiCard
-            label="Temp VR max"
-            value={`${formatNumber(stats.maxTempVr, 1)} °C`}
-            tone={stats.maxTempVr >= 85 ? "warn" : "default"}
-          />
-          <KpiCard
             label="Temp VR min"
             value={`${formatNumber(stats.minTempVr, 1)} °C`}
+            tone="cool"
           />
-          {stats.maxAmbientTemp !== null ? (
-            <KpiCard
-              label="Temp esterna max"
-              value={`${formatNumber(stats.maxAmbientTemp, 1)} °C`}
-            />
-          ) : null}
+          <KpiCard
+            label="Temp VR max"
+            value={`${formatNumber(stats.maxTempVr, 1)} °C`}
+            tone="warm"
+          />
           {stats.minAmbientTemp !== null ? (
             <KpiCard
               label="Temp esterna min"
               value={`${formatNumber(stats.minAmbientTemp, 1)} °C`}
+              tone="cool"
+            />
+          ) : null}
+          {stats.maxAmbientTemp !== null ? (
+            <KpiCard
+              label="Temp esterna max"
+              value={`${formatNumber(stats.maxAmbientTemp, 1)} °C`}
+              tone="warm"
             />
           ) : null}
         </div>
@@ -187,12 +194,14 @@ function App() {
                 yAxisId="left"
                 domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
                 tickFormatter={(value: number) => formatNumber(value, 2)}
+                label={{ value: "TH/s", angle: -90, position: "insideLeft" }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 domain={[(value: number) => value - 1.5, (value: number) => value + 1.5]}
                 tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "°C", angle: 90, position: "insideRight" }}
               />
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
@@ -271,11 +280,16 @@ function App() {
                   })
                 }
               />
-              <YAxis yAxisId="left" tickFormatter={(value: number) => formatNumber(value, 1)} />
+              <YAxis
+                yAxisId="left"
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "W", angle: -90, position: "insideLeft" }}
+              />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "W/TH", angle: 90, position: "insideRight" }}
               />
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
@@ -332,7 +346,10 @@ function App() {
                   })
                 }
               />
-              <YAxis tickFormatter={(value: number) => formatNumber(value, 1)} />
+              <YAxis
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "°C", angle: -90, position: "insideLeft" }}
+              />
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
                 labelStyle={{ color: "#d4def5" }}
@@ -401,12 +418,14 @@ function App() {
                 yAxisId="left"
                 domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
                 tickFormatter={(value: number) => formatNumber(value, 2)}
+                label={{ value: "TH/s", angle: -90, position: "insideLeft" }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 domain={[(value: number) => value - 1.5, (value: number) => value + 1.5]}
                 tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "°C", angle: 90, position: "insideRight" }}
               />
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
@@ -462,6 +481,115 @@ function App() {
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
+
+        <ChartCard title="Efficienza e temperatura esterna" subtitle="W/TH vs °C">
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={telemetryForCharts}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
+              <XAxis
+                dataKey="timestamp"
+                tickFormatter={(value: number) =>
+                  new Date(value).toLocaleTimeString("it-IT", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })
+                }
+              />
+              <YAxis
+                yAxisId="left"
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "W/TH", angle: -90, position: "insideLeft" }}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "°C", angle: 90, position: "insideRight" }}
+              />
+              <Tooltip
+                contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
+                labelStyle={{ color: "#d4def5" }}
+                labelFormatter={(value: number) => formatTimestamp(value)}
+                formatter={(value: number, name: string) => [formatNumber(value, 1), name]}
+              />
+              <Legend />
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="efficiencyWPerTH"
+                name="Efficienza W/TH"
+                stroke="#ffd166"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="ambientTempC"
+                name="Temp esterna °C"
+                stroke="#7aa2ff"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Efficienza e hashrate" subtitle="W/TH vs TH/s">
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={telemetryForCharts}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
+              <XAxis
+                dataKey="timestamp"
+                tickFormatter={(value: number) =>
+                  new Date(value).toLocaleTimeString("it-IT", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })
+                }
+              />
+              <YAxis
+                yAxisId="left"
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "W/TH", angle: -90, position: "insideLeft" }}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tickFormatter={(value: number) => formatNumber(value, 2)}
+                label={{ value: "TH/s", angle: 90, position: "insideRight" }}
+              />
+              <Tooltip
+                contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
+                labelStyle={{ color: "#d4def5" }}
+                labelFormatter={(value: number) => formatTimestamp(value)}
+                formatter={(value: number, name: string) => {
+                  if (name.includes("Hashrate")) return [formatNumber(value, 2), name];
+                  return [formatNumber(value, 1), name];
+                }}
+              />
+              <Legend />
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="efficiencyWPerTH"
+                name="Efficienza W/TH"
+                stroke="#ffd166"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="hashrateTh"
+                name="Hashrate TH/s"
+                stroke="#25c2a0"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </section>
 
       <TelemetryTable telemetry={telemetry} />
@@ -470,13 +598,9 @@ function App() {
         <p>
           Campioni analizzati: <strong>{stats.totalSamples}</strong>
         </p>
-        {debugInfo ? (
-          <p className="debug-banner">
-            Debug: db `{debugInfo.database}`, collection `{debugInfo.collection}`, docs{" "}
-            {debugInfo.docCount}, samples {debugInfo.sampleCount}, valid{" "}
-            {debugInfo.validCount}, giorni {debugInfo.dayIds.join(", ") || "-"}
-          </p>
-        ) : null}
+        <p>
+          Giorni analizzati: <strong>{debugInfo ? debugInfo.docCount : 0}</strong>
+        </p>
       </footer>
     </main>
   );
