@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Area,
-  AreaChart,
   CartesianGrid,
   Legend,
   Line,
@@ -28,6 +26,20 @@ import { loadTelemetry } from "./services/telemetryRepository";
 import type { TelemetryPoint, TimeRange } from "./types";
 
 function App() {
+  const EventUpMarker = ({ cx, cy, fill }: { cx?: number; cy?: number; fill?: string }) => {
+    if (cx === undefined || cy === undefined) return null;
+    const size = 6;
+    const path = `M ${cx} ${cy - size} L ${cx - size} ${cy + size} L ${cx + size} ${cy + size} Z`;
+    return <path d={path} fill={fill ?? "#7ef7ac"} stroke="#0b121f" strokeWidth={1} />;
+  };
+
+  const EventDownMarker = ({ cx, cy, fill }: { cx?: number; cy?: number; fill?: string }) => {
+    if (cx === undefined || cy === undefined) return null;
+    const size = 6;
+    const path = `M ${cx - size} ${cy - size} L ${cx + size} ${cy - size} L ${cx} ${cy + size} Z`;
+    return <path d={path} fill={fill ?? "#ff8a48"} stroke="#0b121f" strokeWidth={1} />;
+  };
+
   const [rawTelemetry, setRawTelemetry] = useState<TelemetryPoint[]>([]);
   const [range, setRange] = useState<TimeRange>("1d");
   const [loading, setLoading] = useState(true);
@@ -246,6 +258,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning up"
                 fill="#7ef7ac"
+                shape={(props) => <EventUpMarker {...props} />}
               />
               <Scatter
                 yAxisId="left"
@@ -253,6 +266,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning down"
                 fill="#ff8a48"
+                shape={(props) => <EventDownMarker {...props} />}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -263,13 +277,7 @@ function App() {
           subtitle="Confronto diretto tra consumo e resa"
         >
           <ResponsiveContainer width="100%" height={320}>
-            <AreaChart data={telemetryForCharts}>
-              <defs>
-                <linearGradient id="colorPower" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#5cc8ff" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#5cc8ff" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
               <XAxis
                 dataKey="timestamp"
@@ -298,13 +306,14 @@ function App() {
                 formatter={(value: number, name: string) => [formatNumber(value, 1), name]}
               />
               <Legend />
-              <Area
+              <Line
                 yAxisId="left"
                 type="monotone"
                 dataKey="powerW"
                 name="Potenza W"
                 stroke="#5cc8ff"
-                fill="url(#colorPower)"
+                strokeWidth={2}
+                dot={false}
               />
               <Line
                 yAxisId="right"
@@ -321,6 +330,7 @@ function App() {
                 dataKey="powerW"
                 name="Tuning up"
                 fill="#7ef7ac"
+                shape={(props) => <EventUpMarker {...props} />}
               />
               <Scatter
                 yAxisId="left"
@@ -328,8 +338,9 @@ function App() {
                 dataKey="powerW"
                 name="Tuning down"
                 fill="#ff8a48"
+                shape={(props) => <EventDownMarker {...props} />}
               />
-            </AreaChart>
+            </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
@@ -386,12 +397,14 @@ function App() {
                 dataKey="tempChipC"
                 name="Tuning up"
                 fill="#7ef7ac"
+                shape={(props) => <EventUpMarker {...props} />}
               />
               <Scatter
                 data={eventDownPoints}
                 dataKey="tempChipC"
                 name="Tuning down"
                 fill="#ff8a48"
+                shape={(props) => <EventDownMarker {...props} />}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -470,6 +483,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning up"
                 fill="#7ef7ac"
+                shape={(props) => <EventUpMarker {...props} />}
               />
               <Scatter
                 yAxisId="left"
@@ -477,13 +491,14 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning down"
                 fill="#ff8a48"
+                shape={(props) => <EventDownMarker {...props} />}
               />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard title="Efficienza e temperatura esterna" subtitle="W/TH vs °C">
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={260}>
             <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
               <XAxis
@@ -497,12 +512,14 @@ function App() {
               />
               <YAxis
                 yAxisId="left"
+                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
                 tickFormatter={(value: number) => formatNumber(value, 1)}
                 label={{ value: "W/TH", angle: -90, position: "insideLeft" }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
+                domain={[(value: number) => value - 1, (value: number) => value + 1]}
                 tickFormatter={(value: number) => formatNumber(value, 1)}
                 label={{ value: "°C", angle: 90, position: "insideRight" }}
               />
@@ -531,12 +548,28 @@ function App() {
                 strokeWidth={2}
                 dot={false}
               />
+              <Scatter
+                yAxisId="left"
+                data={eventUpPoints}
+                dataKey="efficiencyWPerTH"
+                name="Tuning up"
+                fill="#7ef7ac"
+                shape={(props) => <EventUpMarker {...props} />}
+              />
+              <Scatter
+                yAxisId="left"
+                data={eventDownPoints}
+                dataKey="efficiencyWPerTH"
+                name="Tuning down"
+                fill="#ff8a48"
+                shape={(props) => <EventDownMarker {...props} />}
+              />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard title="Efficienza e hashrate" subtitle="W/TH vs TH/s">
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={260}>
             <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
               <XAxis
@@ -550,12 +583,14 @@ function App() {
               />
               <YAxis
                 yAxisId="left"
+                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
                 tickFormatter={(value: number) => formatNumber(value, 1)}
                 label={{ value: "W/TH", angle: -90, position: "insideLeft" }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
+                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
                 tickFormatter={(value: number) => formatNumber(value, 2)}
                 label={{ value: "TH/s", angle: 90, position: "insideRight" }}
               />
@@ -586,6 +621,22 @@ function App() {
                 stroke="#25c2a0"
                 strokeWidth={2}
                 dot={false}
+              />
+              <Scatter
+                yAxisId="right"
+                data={eventUpPoints}
+                dataKey="hashrateTh"
+                name="Tuning up"
+                fill="#7ef7ac"
+                shape={(props) => <EventUpMarker {...props} />}
+              />
+              <Scatter
+                yAxisId="right"
+                data={eventDownPoints}
+                dataKey="hashrateTh"
+                name="Tuning down"
+                fill="#ff8a48"
+                shape={(props) => <EventDownMarker {...props} />}
               />
             </LineChart>
           </ResponsiveContainer>
