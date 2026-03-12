@@ -26,14 +26,15 @@ import { loadTelemetry } from "./services/telemetryRepository";
 import type { TelemetryPoint, TimeRange } from "./types";
 
 function App() {
-  const EventUpMarker = ({ cx, cy, fill }: { cx?: number; cy?: number; fill?: string }) => {
+  type EventMarkerProps = { cx?: number; cy?: number; fill?: string };
+  const EventUpMarker = ({ cx, cy, fill }: EventMarkerProps) => {
     if (cx === undefined || cy === undefined) return null;
     const size = 6;
     const path = `M ${cx} ${cy - size} L ${cx - size} ${cy + size} L ${cx + size} ${cy + size} Z`;
     return <path d={path} fill={fill ?? "#7ef7ac"} stroke="#0b121f" strokeWidth={1} />;
   };
 
-  const EventDownMarker = ({ cx, cy, fill }: { cx?: number; cy?: number; fill?: string }) => {
+  const EventDownMarker = ({ cx, cy, fill }: EventMarkerProps) => {
     if (cx === undefined || cy === undefined) return null;
     const size = 6;
     const path = `M ${cx - size} ${cy - size} L ${cx + size} ${cy - size} L ${cx} ${cy + size} Z`;
@@ -258,7 +259,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning up"
                 fill="#7ef7ac"
-                shape={(props) => <EventUpMarker {...props} />}
+                shape={EventUpMarker}
               />
               <Scatter
                 yAxisId="left"
@@ -266,7 +267,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning down"
                 fill="#ff8a48"
-                shape={(props) => <EventDownMarker {...props} />}
+                shape={EventDownMarker}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -330,7 +331,7 @@ function App() {
                 dataKey="powerW"
                 name="Tuning up"
                 fill="#7ef7ac"
-                shape={(props) => <EventUpMarker {...props} />}
+                shape={EventUpMarker}
               />
               <Scatter
                 yAxisId="left"
@@ -338,7 +339,7 @@ function App() {
                 dataKey="powerW"
                 name="Tuning down"
                 fill="#ff8a48"
-                shape={(props) => <EventDownMarker {...props} />}
+                shape={EventDownMarker}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -397,14 +398,14 @@ function App() {
                 dataKey="tempChipC"
                 name="Tuning up"
                 fill="#7ef7ac"
-                shape={(props) => <EventUpMarker {...props} />}
+                shape={EventUpMarker}
               />
               <Scatter
                 data={eventDownPoints}
                 dataKey="tempChipC"
                 name="Tuning down"
                 fill="#ff8a48"
-                shape={(props) => <EventDownMarker {...props} />}
+                shape={EventDownMarker}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -483,7 +484,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning up"
                 fill="#7ef7ac"
-                shape={(props) => <EventUpMarker {...props} />}
+                shape={EventUpMarker}
               />
               <Scatter
                 yAxisId="left"
@@ -491,7 +492,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning down"
                 fill="#ff8a48"
-                shape={(props) => <EventDownMarker {...props} />}
+                shape={EventDownMarker}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -554,7 +555,7 @@ function App() {
                 dataKey="efficiencyWPerTH"
                 name="Tuning up"
                 fill="#7ef7ac"
-                shape={(props) => <EventUpMarker {...props} />}
+                shape={EventUpMarker}
               />
               <Scatter
                 yAxisId="left"
@@ -562,7 +563,7 @@ function App() {
                 dataKey="efficiencyWPerTH"
                 name="Tuning down"
                 fill="#ff8a48"
-                shape={(props) => <EventDownMarker {...props} />}
+                shape={EventDownMarker}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -628,7 +629,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning up"
                 fill="#7ef7ac"
-                shape={(props) => <EventUpMarker {...props} />}
+                shape={EventUpMarker}
               />
               <Scatter
                 yAxisId="right"
@@ -636,7 +637,7 @@ function App() {
                 dataKey="hashrateTh"
                 name="Tuning down"
                 fill="#ff8a48"
-                shape={(props) => <EventDownMarker {...props} />}
+                shape={EventDownMarker}
               />
             </LineChart>
           </ResponsiveContainer>
