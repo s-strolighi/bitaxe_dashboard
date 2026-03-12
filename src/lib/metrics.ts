@@ -11,7 +11,8 @@ export function filterByRange(
 ): TelemetryPoint[] {
   if (range === "all" || telemetry.length === 0) return telemetry;
 
-  const now = telemetry[telemetry.length - 1].timestamp;
+  const lastTimestamp = telemetry[telemetry.length - 1].timestamp;
+  const now = Math.max(Date.now(), lastTimestamp);
   const rangeMsMap: Record<Exclude<TimeRange, "all">, number> = {
     "1h": 1 * 60 * 60 * 1000,
     "3h": 3 * 60 * 60 * 1000,

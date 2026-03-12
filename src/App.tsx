@@ -84,6 +84,7 @@ function App() {
     () => telemetryForCharts.filter((point) => point.event === "tuning_down"),
     [telemetryForCharts]
   );
+  const totalTuningEvents = eventUpPoints.length + eventDownPoints.length;
   const stats = useMemo(() => calculateStats(telemetry), [telemetry]);
 
   if (loading) {
@@ -192,7 +193,7 @@ function App() {
         <ChartCard
           className="chart-card-wide"
           title="Hashrate vs Temperature"
-          subtitle="Serie aggregate per migliore leggibilita"
+          subtitle={`Serie aggregate per migliore leggibilita · Eventi tuning: ${totalTuningEvents}`}
         >
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={telemetryForCharts}>
@@ -278,7 +279,7 @@ function App() {
 
         <ChartCard
           title="Potenza e efficienza"
-          subtitle="Confronto diretto tra consumo e resa"
+          subtitle={`Confronto diretto tra consumo e resa · Eventi tuning: ${totalTuningEvents}`}
         >
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={telemetryForCharts}>
@@ -350,7 +351,10 @@ function App() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Temperature" subtitle="Esterna, chip e VR">
+        <ChartCard
+          title="Temperature"
+          subtitle={`Esterna, chip e VR · Eventi tuning: ${totalTuningEvents}`}
+        >
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
@@ -419,7 +423,7 @@ function App() {
         <ChartCard
           className="chart-card-wide"
           title="Hashrate e temperatura esterna"
-          subtitle="Hashrate, temp esterna e temp chip"
+          subtitle={`Hashrate, temp esterna e temp chip · Eventi tuning: ${totalTuningEvents}`}
         >
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={telemetryForCharts}>
@@ -503,7 +507,10 @@ function App() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Efficienza e temperatura esterna" subtitle="W/TH vs °C">
+        <ChartCard
+          title="Efficienza e temperatura esterna"
+          subtitle={`W/TH vs °C · Eventi tuning: ${totalTuningEvents}`}
+        >
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
@@ -574,7 +581,10 @@ function App() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Efficienza e hashrate" subtitle="W/TH vs TH/s">
+        <ChartCard
+          title="Efficienza e hashrate"
+          subtitle={`W/TH vs TH/s · Eventi tuning: ${totalTuningEvents}`}
+        >
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={telemetryForCharts}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2f3546" />
@@ -657,6 +667,9 @@ function App() {
         </p>
         <p>
           Giorni analizzati: <strong>{debugInfo ? debugInfo.docCount : 0}</strong>
+        </p>
+        <p>
+          Eventi di tuning analizzati: <strong>{totalTuningEvents}</strong>
         </p>
       </footer>
     </main>

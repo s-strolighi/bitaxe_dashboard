@@ -26,6 +26,7 @@ export function TelemetryTable({ telemetry }: TelemetryTableProps) {
               <th>Temp Est. (°C)</th>
               <th>Potenza (W)</th>
               <th>Efficienza (W/TH)</th>
+              <th>Evento</th>
             </tr>
           </thead>
           <tbody>
@@ -42,6 +43,7 @@ export function TelemetryTable({ telemetry }: TelemetryTableProps) {
                 </td>
                 <td>{formatNumber(point.powerW, 1)}</td>
                 <td>{formatNumber(point.efficiencyWPerTH, 1)}</td>
+                <td>{point.event ?? "-"}</td>
               </tr>
             ))}
           </tbody>
