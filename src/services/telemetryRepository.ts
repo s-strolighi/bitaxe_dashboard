@@ -217,8 +217,17 @@ function normalizeSample(raw: Record<string, unknown>): {
     0
   );
   const event = readPath(merged, "event");
-  const normalizedEvent =
-    event === "tuning_up" || event === "tuning_down" ? event : null;
+  const normalizedEvent = (() => {
+    if (event === "tuning_up" || event === "tuning_down") return event;
+    if (typeof event === "string") {
+      const lowered = event.trim().toLowerCase();
+      if (lowered.includes("tuning") && lowered.includes("up")) return "tuning_up";
+      if (lowered.includes("tuning") && lowered.includes("down")) return "tuning_down";
+      if (lowered === "up") return "tuning_up";
+      if (lowered === "down") return "tuning_down";
+    }
+    return null;
+  })();
 
   const missing: string[] = [];
   if (timestamp === null) missing.push("timestamp");

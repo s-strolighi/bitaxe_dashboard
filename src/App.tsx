@@ -30,7 +30,7 @@ function App() {
     if (typeof props !== "object" || props === null) return <g />;
     const { cx, cy, fill } = props as { cx?: number; cy?: number; fill?: string };
     if (cx === undefined || cy === undefined) return <g />;
-    const size = 6;
+    const size = 7;
     const path = `M ${cx} ${cy - size} L ${cx - size} ${cy + size} L ${cx + size} ${cy + size} Z`;
     return <path d={path} fill={fill ?? "#7ef7ac"} stroke="#0b121f" strokeWidth={1} />;
   };
@@ -39,7 +39,7 @@ function App() {
     if (typeof props !== "object" || props === null) return <g />;
     const { cx, cy, fill } = props as { cx?: number; cy?: number; fill?: string };
     if (cx === undefined || cy === undefined) return <g />;
-    const size = 6;
+    const size = 7;
     const path = `M ${cx - size} ${cy - size} L ${cx + size} ${cy - size} L ${cx} ${cy + size} Z`;
     return <path d={path} fill={fill ?? "#ff8a48"} stroke="#0b121f" strokeWidth={1} />;
   };
@@ -294,12 +294,14 @@ function App() {
               />
               <YAxis
                 yAxisId="left"
+                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
                 tickFormatter={(value: number) => formatNumber(value, 1)}
                 label={{ value: "W", angle: -90, position: "insideLeft" }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
+                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
                 tickFormatter={(value: number) => formatNumber(value, 1)}
                 label={{ value: "W/TH", angle: 90, position: "insideRight" }}
               />
