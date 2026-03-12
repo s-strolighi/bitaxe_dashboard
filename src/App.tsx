@@ -26,19 +26,19 @@ import { loadTelemetry } from "./services/telemetryRepository";
 import type { TelemetryPoint, TimeRange } from "./types";
 
 function App() {
-  const EventUpMarker = (props: unknown) => {
-    if (typeof props !== "object" || props === null) return null;
+  const EventUpMarker = (props: unknown): JSX.Element => {
+    if (typeof props !== "object" || props === null) return <g />;
     const { cx, cy, fill } = props as { cx?: number; cy?: number; fill?: string };
-    if (cx === undefined || cy === undefined) return null;
+    if (cx === undefined || cy === undefined) return <g />;
     const size = 6;
     const path = `M ${cx} ${cy - size} L ${cx - size} ${cy + size} L ${cx + size} ${cy + size} Z`;
     return <path d={path} fill={fill ?? "#7ef7ac"} stroke="#0b121f" strokeWidth={1} />;
   };
 
-  const EventDownMarker = (props: unknown) => {
-    if (typeof props !== "object" || props === null) return null;
+  const EventDownMarker = (props: unknown): JSX.Element => {
+    if (typeof props !== "object" || props === null) return <g />;
     const { cx, cy, fill } = props as { cx?: number; cy?: number; fill?: string };
-    if (cx === undefined || cy === undefined) return null;
+    if (cx === undefined || cy === undefined) return <g />;
     const size = 6;
     const path = `M ${cx - size} ${cy - size} L ${cx + size} ${cy - size} L ${cx} ${cy + size} Z`;
     return <path d={path} fill={fill ?? "#ff8a48"} stroke="#0b121f" strokeWidth={1} />;
