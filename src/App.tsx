@@ -52,11 +52,6 @@ function App() {
       </g>
     );
   };
-    if (cx === undefined || cy === undefined) return <g />;
-    const size = 7;
-    const path = `M ${cx - size} ${cy - size} L ${cx + size} ${cy - size} L ${cx} ${cy + size} Z`;
-    return <path d={path} fill={fill ? "#ff8a48"} stroke="#0b121f" strokeWidth={1} />;
-  };
 
   const [rawTelemetry, setRawTelemetry] = useState<TelemetryPoint[]>([]);
   const [range, setRange] = useState<TimeRange>("1d");
@@ -77,8 +72,8 @@ function App() {
       const { points, source, info, debug } = await loadTelemetry();
       setRawTelemetry(points);
       setDataSource(source);
-      setSourceInfo(info ? null);
-      setDebugInfo(debug ? null);
+      setSourceInfo(info ?? null);
+      setDebugInfo(debug ?? null);
       setLoading(false);
     }
 

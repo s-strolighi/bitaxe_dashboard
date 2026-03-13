@@ -43,7 +43,7 @@ export function TelemetryTable({ telemetry }: TelemetryTableProps) {
                 </td>
                 <td>{formatNumber(point.powerW, 1)}</td>
                 <td>{formatNumber(point.efficiencyWPerTH, 1)}</td>
-                <td>{point.event ? "-"}</td>
+                <td>{point.event ?? "-"}</td>
               </tr>
             ))}
           </tbody>
