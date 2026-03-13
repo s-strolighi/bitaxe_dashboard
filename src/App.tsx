@@ -13,6 +13,7 @@ import {
 import { ChartCard } from "./components/ChartCard";
 import { KpiCard } from "./components/KpiCard";
 import { RangeSelector } from "./components/RangeSelector";
+import { EventsTable } from "./components/EventsTable";
 import { TelemetryTable } from "./components/TelemetryTable";
 import {
   buildChartPoints,
@@ -30,18 +31,31 @@ function App() {
     if (typeof props !== "object" || props === null) return <g />;
     const { cx, cy, fill } = props as { cx?: number; cy?: number; fill?: string };
     if (cx === undefined || cy === undefined) return <g />;
-    const size = 7;
-    const path = `M ${cx} ${cy - size} L ${cx - size} ${cy + size} L ${cx + size} ${cy + size} Z`;
-    return <path d={path} fill={fill ?? "#7ef7ac"} stroke="#0b121f" strokeWidth={1} />;
+    const size = 8;
+    const path = `M 0 ${-size} L ${-size} ${size} L ${size} ${size} Z`;
+    return (
+      <g transform={`translate(${cx},${cy})`}>
+        <path d={path} fill={fill ?? "#7ef7ac"} stroke="#0b121f" strokeWidth={1.5} />
+      </g>
+    );
   };
 
   const EventDownMarker = (props: unknown): JSX.Element => {
     if (typeof props !== "object" || props === null) return <g />;
     const { cx, cy, fill } = props as { cx?: number; cy?: number; fill?: string };
     if (cx === undefined || cy === undefined) return <g />;
+    const size = 8;
+    const path = `M 0 ${size} L ${-size} ${-size} L ${size} ${-size} Z`;
+    return (
+      <g transform={`translate(${cx},${cy})`}>
+        <path d={path} fill={fill ?? "#ff8a48"} stroke="#0b121f" strokeWidth={1.5} />
+      </g>
+    );
+  };
+    if (cx === undefined || cy === undefined) return <g />;
     const size = 7;
     const path = `M ${cx - size} ${cy - size} L ${cx + size} ${cy - size} L ${cx} ${cy + size} Z`;
-    return <path d={path} fill={fill ?? "#ff8a48"} stroke="#0b121f" strokeWidth={1} />;
+    return <path d={path} fill={fill ? "#ff8a48"} stroke="#0b121f" strokeWidth={1} />;
   };
 
   const [rawTelemetry, setRawTelemetry] = useState<TelemetryPoint[]>([]);
@@ -63,8 +77,8 @@ function App() {
       const { points, source, info, debug } = await loadTelemetry();
       setRawTelemetry(points);
       setDataSource(source);
-      setSourceInfo(info ?? null);
-      setDebugInfo(debug ?? null);
+      setSourceInfo(info ? null);
+      setDebugInfo(debug ? null);
       setLoading(false);
     }
 
@@ -582,8 +596,8 @@ function App() {
         </ChartCard>
 
         <ChartCard
-          title="Efficienza e hashrate"
-          subtitle={`W/TH vs TH/s · Eventi tuning: ${totalTuningEvents}`}
+          title="Efficienza e delta temperatura"
+          subtitle={`Delta temp = max(Temp chip/VR) - Temp esterna ? Eventi tuning: ${totalTuningEvents}`}
         >
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={telemetryForCharts}>
@@ -606,18 +620,15 @@ function App() {
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                domain={[(value: number) => value * 0.98, (value: number) => value * 1.02]}
-                tickFormatter={(value: number) => formatNumber(value, 2)}
-                label={{ value: "TH/s", angle: 90, position: "insideRight" }}
+                domain={[(value: number) => value - 2, (value: number) => value + 2]}
+                tickFormatter={(value: number) => formatNumber(value, 1)}
+                label={{ value: "? ?C", angle: 90, position: "insideRight" }}
               />
               <Tooltip
                 contentStyle={{ background: "#111827", border: "1px solid #2e3a52", color: "#eaf0ff" }}
                 labelStyle={{ color: "#d4def5" }}
                 labelFormatter={(value: number) => formatTimestamp(value)}
-                formatter={(value: number, name: string) => {
-                  if (name.includes("Hashrate")) return [formatNumber(value, 2), name];
-                  return [formatNumber(value, 1), name];
-                }}
+                formatter={(value: number, name: string) => [formatNumber(value, 1), name]}
               />
               <Legend />
               <Line
@@ -632,24 +643,24 @@ function App() {
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="hashrateTh"
-                name="Hashrate TH/s"
-                stroke="#25c2a0"
+                dataKey="deltaTempC"
+                name="Delta temp ?C"
+                stroke="#9ad0ff"
                 strokeWidth={2}
                 dot={false}
               />
               <Scatter
-                yAxisId="right"
+                yAxisId="left"
                 data={eventUpPoints}
-                dataKey="hashrateTh"
+                dataKey="efficiencyWPerTH"
                 name="Tuning up"
                 fill="#7ef7ac"
                 shape={EventUpMarker}
               />
               <Scatter
-                yAxisId="right"
+                yAxisId="left"
                 data={eventDownPoints}
-                dataKey="hashrateTh"
+                dataKey="efficiencyWPerTH"
                 name="Tuning down"
                 fill="#ff8a48"
                 shape={EventDownMarker}
@@ -660,6 +671,7 @@ function App() {
       </section>
 
       <TelemetryTable telemetry={telemetry} />
+      <EventsTable telemetry={telemetry} />
 
       <footer className="footer-note">
         <p>

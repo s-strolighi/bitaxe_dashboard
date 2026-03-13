@@ -116,6 +116,8 @@ export type ChartPoint = TelemetryPoint & {
   hashrateTh: number;
   efficiencyCalcWPerTH: number;
   efficiencyWPerTH: number;
+  maxDeviceTempC: number;
+  deltaTempC: number | null;
   acceptedSharesDelta: number;
   rejectedSharesDelta: number;
 };
@@ -134,6 +136,11 @@ export function buildChartPoints(telemetry: TelemetryPoint[]): ChartPoint[] {
           : point.hashrateGh > 0
             ? (point.powerW * 1000) / point.hashrateGh
             : 0,
+      maxDeviceTempC: Math.max(point.tempChipC, point.tempVrC),
+      deltaTempC:
+        point.ambientTempC !== null
+          ? Math.max(point.tempChipC, point.tempVrC) - point.ambientTempC
+          : null,
       acceptedSharesDelta: prev
         ? Math.max(0, point.sharesTotal - prev.sharesTotal)
         : 0,
